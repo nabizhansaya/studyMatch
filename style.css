@@ -1,0 +1,65 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2933;
+  background: #f4f6f8;
+}
+
+header {
+  background: #1d4ed8;
+  color: #ffffff;
+  padding: 1rem;
+}
+header h1 { margin: 0; font-size: 1.5rem; }
+header p  { margin: 0.25rem 0 0; }
+
+main { max-width: 720px; margin: 0 auto; padding: 1rem; }
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d9e0e6;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.card h2 { margin-top: 0; font-size: 1.15rem; }
+
+label { display: block; font-weight: 600; margin: 0.75rem 0 0.25rem; }
+
+select, input, button {
+  font: inherit;
+  min-height: 44px;            
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #8895a3;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+.row > div { flex: 1 1 180px; }
+.row > button { flex: 0 0 auto; width: auto; }
+
+button {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: #1e40af; }
+button:disabled { background: #6b7a8c; border-color: #6b7a8c; cursor: wait; }
+
+:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+.student { border-top: 1px solid #d9e0e6; padding: 0.75rem 0; }
+.student h3 { margin: 0; font-size: 1.05rem; }
+.student p  { margin: 0.25rem 0; }
+.student button { width: auto; margin-top: 0.5rem; }
+
+#myRequests { padding-left: 1.25rem; }
+
+#status.ok    { color: #166534; font-weight: 600; }
+#status.error { color: #b91c1c; font-weight: 600; }

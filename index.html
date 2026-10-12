@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Partners - prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Study Partners</h1>
+    <p>Find classmates who study the same subject.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Who are you?</h2>
+      <label for="meSelect">Acting as (temporary)</label>
+      <select id="meSelect"></select>
+    </section>
+
+    <section class="card">
+      <h2>2. Find study partners</h2>
+      <div class="row">
+        <div>
+          <label for="subjectSelect">Subject</label>
+          <select id="subjectSelect"></select>
+        </div>
+        <div>
+          <label for="dayFilter">Day</label>
+          <select id="dayFilter">
+            <option value="">Any day</option>
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+            <option value="7">Sunday</option>
+          </select>
+        </div>
+        <button id="searchBtn" type="button">Search</button>
+      </div>
+
+      <label for="messageInput">Message for your request (optional)</label>
+      <input id="messageInput" type="text" maxlength="200"
+             placeholder="Hi! Want to study together this week?">
+
+      <p id="status" role="status" aria-live="polite"></p>
+      <div id="results"></div>
+    </section>
+
+    <section class="card">
+      <h2>3. My sent requests</h2>
+      <ul id="myRequests"></ul>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
