@@ -1,0 +1,89 @@
+//https://dbdiagram.io
+
+Table faculties {
+  faculty_id smallint [pk, increment]
+  name text [not null, unique]
+}
+
+Table locations {
+  location_id smallint [pk, increment]
+  name text [not null, unique]
+  is_online boolean [not null]
+}
+
+Table subjects {
+  subject_id smallint [pk, increment]
+  code text [not null, unique]
+  name text [not null]
+  faculty_id smallint [not null]
+}
+
+Table profiles {
+  profile_id bigint [pk, increment]
+  auth_user_id uuid [unique]
+  full_name text [not null]
+  email text [not null, unique]
+  faculty_id smallint
+  study_year smallint
+  location_id smallint
+  bio text
+  created_at timestamptz [not null]
+}
+
+Table profile_contacts {
+  profile_id bigint [pk]
+  telegram_username text [not null]
+}
+
+Table profile_subjects {
+  profile_id bigint [not null]
+  subject_id smallint [not null]
+  indexes {
+    (profile_id, subject_id) [pk]
+  }
+}
+
+Table study_requests {
+  request_id bigint [pk, increment]
+  sender_id bigint [not null]
+  subject_id smallint [not null]
+  proposed_start timestamptz [not null]
+  duration_minutes smallint [not null]
+  location_id smallint [not null]
+  status text [not null]
+  message text
+  created_at timestamptz [not null]
+}
+
+Table request_responses {
+  request_id bigint [not null]
+  responder_id bigint [not null]
+  status text [not null]
+  created_at timestamptz [not null]
+  indexes {
+    (request_id, responder_id) [pk]
+  }
+}
+
+Table notifications {
+  notification_id bigint [pk, increment]
+  profile_id bigint [not null]
+  type text [not null]
+  request_id bigint
+  is_read boolean [not null]
+  created_at timestamptz [not null]
+}
+
+Ref: subjects.faculty_id > faculties.faculty_id
+Ref: profiles.faculty_id > faculties.faculty_id
+Ref: profiles.location_id > locations.location_id
+Ref: profile_contacts.profile_id - profiles.profile_id
+Ref: profile_subjects.profile_id > profiles.profile_id
+Ref: profile_subjects.subject_id > subjects.subject_id
+Ref: study_requests.sender_id > profiles.profile_id
+Ref: study_requests.subject_id > subjects.subject_id
+Ref: study_requests.location_id > locations.location_id
+Ref: request_responses.request_id > study_requests.request_id
+Ref: request_responses.responder_id > profiles.profile_id
+Ref: notifications.profile_id > profiles.profile_id
+Ref: notifications.request_id > study_requests.request_id

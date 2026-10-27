@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMatch - create a request</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>StudyMatch</h1>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="create-title">
+      <h2 id="create-title">Create a study request</h2>
+      <p class="hint">Your request appears on other students' Swipe and Browse pages. When someone accepts it, you both get each other's Telegram username.</p>
+
+      <form id="createForm">
+        <label for="cSubject">Subject (course)</label>
+        <select id="cSubject" required></select>
+
+        <label for="cStart">Date and time</label>
+        <input id="cStart" type="datetime-local" required>
+
+        <div class="row">
+          <div>
+            <label for="cDuration">Length</label>
+            <select id="cDuration">
+              <option value="30">30 minutes</option>
+              <option value="60" selected>1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+              <option value="180">3 hours</option>
+            </select>
+          </div>
+          <div>
+            <label for="cLocation">Place</label>
+            <select id="cLocation" required></select>
+          </div>
+        </div>
+
+        <label for="cMessage">Message (optional)</label>
+        <textarea id="cMessage" maxlength="200" placeholder="For example: Exam preparation, chapter 3-5"></textarea>
+
+        <button type="submit">Post request</button>
+      </form>
+      <p id="cStatus" class="status" role="status" aria-live="polite"></p>
+      <p><a href="matches.html">See my requests and sessions</a></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/create.js"></script>
+</body>
+</html>

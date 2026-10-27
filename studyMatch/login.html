@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMatch - sign in</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <img class="logo" src="assets/logo.svg" alt="" width="32" height="32">
+    <h1>StudyMatch</h1>
+  </header>
+
+  <main>
+    <div class="hero">
+      <img class="hero-img" src="assets/hero-960.webp"
+           srcset="assets/hero-480.webp 480w, assets/hero-960.webp 960w"
+           sizes="(max-width: 760px) 100vw, 720px" width="960" height="640"
+           alt="Two students sit side by side with a stack of books, and a study request card with a green check mark floats between them.">
+      <div class="hero-text">
+        <h2>Find a study partner in seconds</h2>
+        <p>Post a request or accept someone else's.</p>
+      </div>
+    </div>
+
+    <section class="card" aria-labelledby="signin-title">
+      <h2 id="signin-title">Sign in</h2>
+      <form id="signinForm">
+        <label for="siEmail">University e-mail</label>
+        <input id="siEmail" type="email" autocomplete="email" required>
+
+        <label for="siPassword">Password</label>
+        <input id="siPassword" type="password" autocomplete="current-password" required>
+
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="siStatus" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" aria-labelledby="signup-title">
+      <h2 id="signup-title">Create account</h2>
+      <p class="hint">Only university e-mail addresses can register. You will get a confirmation link by e-mail.</p>
+      <form id="signupForm">
+        <label for="suName">Full name</label>
+        <input id="suName" type="text" autocomplete="name" maxlength="80" required>
+
+        <label for="suEmail">University e-mail</label>
+        <input id="suEmail" type="email" autocomplete="email" required>
+
+        <label for="suPassword">Password (at least 8 characters)</label>
+        <input id="suPassword" type="password" autocomplete="new-password" minlength="8" required>
+
+        <div class="row">
+          <div>
+            <label for="suFaculty">Faculty</label>
+            <select id="suFaculty" required></select>
+          </div>
+          <div>
+            <label for="suYear">Year of study</label>
+            <select id="suYear" required>
+              <option value="">Choose...</option>
+              <option>1</option><option>2</option><option>3</option>
+              <option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit">Create account</button>
+      </form>
+      <p id="suStatus" class="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

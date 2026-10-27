@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMatch - swipe (BEFORE optimisation, for measuring only)</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <img class="logo" src="assets/logo.svg" alt="" width="32" height="32">
+    <h1>StudyMatch</h1>
+  </header>
+
+  <main class="swipe-main">
+    <details class="filters">
+      <summary>Filters</summary>
+      <label for="fSubject">Subject (course)</label>
+      <select id="fSubject"></select>
+      <label for="fLocation">Place</label>
+      <select id="fLocation"></select>
+      <label for="fFormat">Format</label>
+      <select id="fFormat">
+        <option value="">Any format</option>
+        <option value="in_person">In person</option>
+        <option value="online">Online</option>
+      </select>
+      <label class="check"><input id="fMine" type="checkbox"> Only subjects from my profile</label>
+      <button id="resetSkipsBtn" type="button" class="secondary">Show skipped requests again</button>
+      <button id="helpBtn" type="button" class="secondary">How it works</button>
+    </details>
+
+    <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
+
+    <div id="stage" class="swipe-stage" tabindex="0"
+         aria-label="Request cards. Right arrow accepts, left arrow skips."></div>
+
+    <div class="swipe-actions">
+      <button id="skipBtn" type="button" class="secondary" aria-label="Skip this request"><svg class="icon-svg" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-close"/></svg> Skip</button>
+      <button id="undoBtn" type="button" class="secondary" aria-label="Undo the last skip"><svg class="icon-svg" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-undo"/></svg> Undo</button>
+      <button id="acceptBtn" type="button" aria-label="Accept this request"><svg class="icon-svg" aria-hidden="true" focusable="false"><use href="assets/icons.svg#i-check"/></svg> Accept</button>
+    </div>
+  </main>
+
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <h2 id="helpTitle">How StudyMatch works</h2>
+    <img class="help-img" src="assets/original/howitworks-original.png" alt="Three phone screens in a row: a student creates a study request, a classmate swipes the request card to accept it, and the two chat to arrange the session.">
+    <div class="swipe-demo" aria-hidden="true">
+      <span class="demo-tag demo-no">SKIP</span>
+      <div class="demo-card">Physics - Tue 16:00</div>
+      <span class="demo-tag demo-yes">ACCEPT</span>
+    </div>
+    <ol>
+      <li>Create a request with the subject, time, length and place.</li>
+      <li>Swipe right on a request to accept it, or left to skip it.</li>
+      <li>Write to your partner on Telegram and study together.</li>
+    </ol>
+    <button id="helpClose" type="button">Got it</button>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/requests-common.js"></script>
+  <script src="js/swipe.js"></script>
+</body>
+</html>
