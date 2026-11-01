@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMatch - my profile</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <img class="logo" src="assets/logo.svg" alt="" width="32" height="32">
+    <h1>StudyMatch</h1>
+  </header>
+
+  <main>
+    <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
+
+    <section class="card" aria-labelledby="about-title">
+      <h2 id="about-title">About me</h2>
+      <form id="profileForm">
+        <label for="fullName">Full name</label>
+        <input id="fullName" type="text" maxlength="80" required>
+
+        <div class="row">
+          <div>
+            <label for="faculty">Faculty</label>
+            <select id="faculty"></select>
+          </div>
+          <div>
+            <label for="studyYear">Year of study</label>
+            <select id="studyYear">
+              <option value="">Choose...</option>
+              <option>1</option><option>2</option><option>3</option>
+              <option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="location">Usual meeting place</label>
+        <p class="hint">Suggested when you create a new request.</p>
+        <select id="location"></select>
+
+        <label for="bio">About me (optional)</label>
+        <textarea id="bio" maxlength="300"></textarea>
+
+        <label for="telegram">Telegram username</label>
+        <p class="hint">Shown only to students whose study request you accepted (or who accepted yours). Example: my_name</p>
+        <input id="telegram" type="text" maxlength="33" autocomplete="off">
+
+        <button type="submit">Save profile</button>
+      </form>
+      <p id="profileStatus" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" aria-labelledby="sound-title">
+      <h2 id="sound-title">Notifications</h2>
+      <label class="check-line"><input id="soundToggle" type="checkbox"> Play a short sound when someone accepts my request</label>
+      <p class="hint">Off by default. A message also appears on the screen, so you never need the sound.</p>
+      <button id="soundTest" type="button" class="secondary">Show a test notification</button>
+      <p id="soundStatus" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" aria-labelledby="subjects-title">
+      <h2 id="subjects-title">Subjects I want to study</h2>
+      <form id="subjectsForm">
+        <fieldset>
+          <legend class="hint">Mark every subject you need a study partner for</legend>
+          <div id="subjectChecks" class="checks"></div>
+        </fieldset>
+        <button type="submit">Save subjects</button>
+      </form>
+      <p id="subjectsStatus" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

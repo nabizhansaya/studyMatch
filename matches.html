@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMatch - my requests and sessions</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>StudyMatch</h1>
+  </header>
+
+  <main>
+    <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
+
+    <section class="card" aria-labelledby="sessions-title">
+      <h2 id="sessions-title">My sessions</h2>
+      <p class="hint">Sessions where a request was accepted. Contact your partner on Telegram to confirm the details.</p>
+      <ul id="sessionList" class="people"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="open-title">
+      <h2 id="open-title">My open requests</h2>
+      <p class="hint">Waiting for someone to accept.</p>
+      <ul id="openList" class="people"></ul>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/matches.js"></script>
+</body>
+</html>
