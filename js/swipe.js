@@ -5,11 +5,11 @@ const undoBtn    = el("undoBtn");
 const acceptBtn  = el("acceptBtn");
 
 let myId = null;
-let deck = [];          // open requests, the first one is on screen
-let lastSkip = null;    // for "Undo"
+let deck = [];
+let lastSkip = null;
 let busy = false;
 
-// ---- Load the feed (all filters at once) -----------------------
+
 async function load() {
   setStatus(pageStatus, "Loading...");
   try {
@@ -23,7 +23,7 @@ async function load() {
   setStatus(pageStatus, `${deck.length} request(s) waiting.`);
 }
 
-// ---- Drawing the card ------------------------------------------
+
 function buildCard(r) {
   const text = requestLines(r);
   const card = document.createElement("article");
@@ -81,7 +81,7 @@ function render() {
     img.sizes = "(max-width: 600px) 70vw, 320px";
     img.width = 480;
     img.height = 320;
-    img.alt = "";                       // decorative: the text below says the same
+    img.alt = "";
     empty.append(img, p, link);
     stage.appendChild(empty);
   } else {
@@ -91,7 +91,7 @@ function render() {
   undoBtn.disabled = !lastSkip;
 }
 
-// ---- Swipe with finger or mouse ----------------------------------
+
 function attachSwipe(card) {
   let startX = null;
   let dx = 0;
@@ -118,8 +118,8 @@ function attachSwipe(card) {
     if (startX === null) return;
     const moved = dx;
     reset();
-    if (moved > 100) doAccept(deck[0]);        // swipe right = accept
-    else if (moved < -100) doSkip(deck[0]);    // swipe left = skip
+    if (moved > 100) doAccept(deck[0]);
+    else if (moved < -100) doSkip(deck[0]);
   });
   card.addEventListener("pointercancel", reset);
 }
@@ -129,7 +129,7 @@ stage.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") doSkip(deck[0]);
 });
 
-// ---- WRITE: accept, skip, undo -----------------------------------
+
 async function doAccept(r) {
   if (!r || busy) return;
   busy = true;
@@ -141,7 +141,7 @@ async function doAccept(r) {
     setStatus(pageStatus, `Accepted ${r.owner_name}'s request.`);
     await showMatch(r);
   } catch (err) {
-    await load();                                  // e.g. someone else was faster
+    await load();
     setStatus(pageStatus, err.message, true);
   } finally {
     busy = false;
@@ -217,7 +217,7 @@ async function init() {
       localStorage.setItem("studymatch.helpSeen", "yes");
       helpDialog.showModal();
     }
-  } catch (e) { /* storage blocked: skip the first-visit help */ }
+  } catch (e) {}
 
   skipBtn.addEventListener("click", () => doSkip(deck[0]));
   undoBtn.addEventListener("click", doUndo);
