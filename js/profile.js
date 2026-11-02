@@ -150,10 +150,6 @@ subjectsForm.addEventListener("submit", async (event) => {
 
 
 async function init() {
-  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
-    return;
-  }
   const session = await requireLogin();
   if (!session) return;
 
