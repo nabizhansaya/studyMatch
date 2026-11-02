@@ -64,9 +64,11 @@ async function loadSubjects() {
   }
 }
 
+
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = profileForm.querySelector("button");
+
 
   const telegram = telegramInput.value.trim().replace(/^@/, "");
   if (telegram && !TELEGRAM_RULE.test(telegram)) {
@@ -78,19 +80,26 @@ profileForm.addEventListener("submit", async (event) => {
   button.disabled = true;
   setStatus(profileStatus, "Saving...");
 
-  const { error } = await db.from("profiles").update({
+  const { data: updatedRows, error: updateError } = await db.from("profiles").update({
     full_name: fullNameInput.value.trim(),
     faculty_id: facultySelect.value || null,
     study_year: yearSelect.value || null,
     location_id: locationSelect.value || null,
     bio: bioInput.value.trim() || null
-  }).eq("profile_id", myId);
+  }).eq("profile_id", myId).select("profile_id");
+
+ 
+  const error = updateError ||
+    ((updatedRows || []).length === 0
+      ? new Error("No profile row was updated. Sign out and sign in again, or contact the team.")
+      : null);
 
   let contactError = null;
   if (!error) {
     if (telegram) {
       ({ error: contactError } = await db.from("profile_contacts")
-        .upsert({ profile_id: myId, telegram_username: telegram }, { onConflict: "profile_id" }));
+        .upsert({ profile_id: myId, telegram_username: telegram }, { onConflict: "profile_id" })
+        .select("profile_id"));
     } else {
       ({ error: contactError } = await db.from("profile_contacts").delete().eq("profile_id", myId));
     }
@@ -138,7 +147,6 @@ subjectsForm.addEventListener("submit", async (event) => {
   savedSubjectIds = chosen;
   setStatus(subjectsStatus, `Saved (${chosen.size} subject(s)).`);
 });
-
 
 
 async function init() {
