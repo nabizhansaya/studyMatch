@@ -20,7 +20,6 @@ function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
   }
 }
 
-
 async function requireLogin() {
   const { data } = await db.auth.getSession();
   if (!data.session) {
@@ -45,7 +44,6 @@ async function signOut() {
 
 const ASSET_BASE = "assets/";
 
-
 function formatWhen(iso) {
   return new Date(iso).toLocaleString([], {
     weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
@@ -68,7 +66,6 @@ function telegramAnchor(username) {
   return a;
 }
 
-
 const NAV_ITEMS = [
   { id: "swipe",   href: "swipe.html",   icon: "\u21C4", label: "Swipe" },
   { id: "browse",  href: "browse.html",  icon: "\u2630", label: "Browse" },
@@ -89,6 +86,18 @@ function svgIcon(name) {
   svg.appendChild(use);
   return svg;
 }
+
+
+const NOTE_TEXT = {
+  new_request: "A new request is available.",
+  request_accepted: "Someone accepted your request. Open Sessions to confirm them.",
+  request_confirmed: "Your request was confirmed. Open Sessions for the Telegram link.",
+  request_declined: "An owner declined your request.",
+  request_not_chosen: "The owner chose another student for a request you accepted.",
+  session_cancelled: "A session or request was cancelled. Open Sessions for details.",
+  session_reminder_24h: "Reminder: you have a study session within 24 hours.",
+  session_reminder_1h: "Reminder: your study session starts within an hour."
+};
 
 
 const SOUND_KEY = "studymatch.sound";
@@ -170,8 +179,9 @@ function renderNav(active, myId) {
           { event: "INSERT", schema: "public", table: "notifications", filter: `profile_id=eq.${myId}` },
           payload => {
             refreshBadge();
-            if (payload.new && payload.new.type === "request_accepted") {
-              showToast("Someone accepted your request. Open Sessions to see who.");
+            const text = payload.new && NOTE_TEXT[payload.new.type];
+            if (text) {
+              showToast(text);
               if (soundEnabled()) playChime();
             }
           })
