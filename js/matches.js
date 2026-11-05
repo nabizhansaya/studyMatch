@@ -1,100 +1,180 @@
 const pageStatus  = document.getElementById("pageStatus");
+const noteList    = document.getElementById("noteList");
 const sessionList = document.getElementById("sessionList");
 const openList    = document.getElementById("openList");
+const waitingList = document.getElementById("waitingList");
 
 let myId = null;
+
+
+function line(className, text) {
+  const d = document.createElement("div");
+  if (className) d.className = className;
+  d.textContent = text;
+  return d;
+}
+
+function actionButton(label, secondary, ariaLabel, handler) {
+  const b = document.createElement("button");
+  b.type = "button";
+  if (secondary) b.className = "secondary";
+  b.textContent = label;
+  b.setAttribute("aria-label", ariaLabel);
+  b.addEventListener("click", async () => {
+    b.disabled = true;
+    await handler();
+    b.disabled = false;
+  });
+  return b;
+}
+
+function headLines(li, subject, code, start, duration, place, message) {
+  const title = document.createElement("strong");
+  title.textContent = `${subject} (${code})`;
+  li.append(title, line("req-when", formatWhen(start)), line("", `${formatDuration(duration)} - ${place}`));
+  if (message) li.appendChild(line("", `"${message}"`));
+}
+
+
+async function act(rpcName, args, doneText) {
+  const { error } = await db.rpc(rpcName, args);
+  if (error) {
+    setStatus(pageStatus, error.message, true);
+    return;
+  }
+  setStatus(pageStatus, doneText);
+  await render();
+}
+
 
 async function loadMine() {
   const { data, error } = await db.from("study_requests")
     .select(`request_id, status, proposed_start, duration_minutes, message,
              subjects(name, code), locations(name),
-             request_responses(status, responder:profiles!responder_id(profile_id, full_name))`)
-    .eq("sender_id", myId)
+             request_responses(status, responder:profiles!responder_id(profile_id, full_name, study_year, bio))`)
+    .eq("sender_id", myId).in("status", ["open", "confirmed"])
     .order("proposed_start");
   if (error) throw error;
   return data;
 }
 
-
-async function loadAccepted() {
+async function loadAnswered() {
   const { data, error } = await db.from("request_responses")
-    .select(`request_id,
-             study_requests(request_id, proposed_start, duration_minutes, message,
+    .select(`request_id, status,
+             study_requests(request_id, status, proposed_start, duration_minutes, message,
                subjects(name, code), locations(name),
                owner:profiles!sender_id(profile_id, full_name))`)
-    .eq("responder_id", myId)
-    .eq("status", "accepted");
+    .eq("responder_id", myId).in("status", ["accepted", "confirmed"]);
   if (error) throw error;
-  return data;
+  return data.filter(a => a.study_requests);
+}
+
+async function loadNotes() {
+  const { data } = await db.from("notifications")
+    .select("notification_id, type, is_read, created_at")
+    .order("created_at", { ascending: false }).limit(10);
+  return data || [];
 }
 
 
-function line(className, text) {
-  const p = document.createElement("div");
-  if (className) p.className = className;
-  p.textContent = text;
-  return p;
+function noteItem(n) {
+  const li = document.createElement("li");
+  li.appendChild(line("", (NOTE_TEXT[n.type] || "Notification") + (n.is_read ? "" : " (new)")));
+  li.appendChild(line("hint", formatWhen(n.created_at)));
+  return li;
 }
 
 function sessionItem(s, contacts) {
   const li = document.createElement("li");
-  const title = document.createElement("strong");
-  title.textContent = `${s.subject} (${s.code})`;
-  li.append(title, line("req-when", formatWhen(s.start)),
-            line("", `${formatDuration(s.duration)} - ${s.place}`));
-  if (new Date(s.start) < new Date()) li.appendChild(line("hint", "This session is in the past."));
-
+  headLines(li, s.subject, s.code, s.start, s.duration, s.place, s.message);
   const partner = document.createElement("div");
   partner.append(`With ${s.partnerName} - `);
   const link = telegramAnchor(contacts.get(s.partnerId));
-  if (link) partner.appendChild(link);
-  else partner.append("no Telegram username added yet");
+  if (link) partner.appendChild(link); else partner.append("no Telegram username yet");
   li.appendChild(partner);
-  if (s.message) li.appendChild(line("", `"${s.message}"`));
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  actions.appendChild(actionButton("Cancel session", true, `Cancel the session about ${s.subject}`, async () => {
+    if (confirm("Cancel this session? The other student will be told.")) {
+      await act("cancel_request", { p_request: s.requestId }, "Session cancelled.");
+    }
+  }));
+  li.appendChild(actions);
   return li;
 }
 
 function openItem(r) {
   const li = document.createElement("li");
-  const title = document.createElement("strong");
-  title.textContent = `${r.subjects.name} (${r.subjects.code})`;
-  li.append(title, line("req-when", formatWhen(r.proposed_start)),
-            line("", `${formatDuration(r.duration_minutes)} - ${r.locations.name}`));
-  if (r.message) li.appendChild(line("", `"${r.message}"`));
+  headLines(li, r.subjects.name, r.subjects.code, r.proposed_start, r.duration_minutes, r.locations.name, r.message);
 
-  const cancel = document.createElement("button");
-  cancel.type = "button";
-  cancel.className = "secondary";
-  cancel.textContent = "Cancel request";
-  cancel.setAttribute("aria-label", `Cancel my request for ${r.subjects.name}`);
-  cancel.addEventListener("click", () => cancelRequest(r.request_id, cancel));
-  li.appendChild(cancel);
+  const interested = r.request_responses.filter(x => x.status === "accepted");
+  if (interested.length === 0) {
+    li.appendChild(line("hint", "Nobody has accepted yet."));
+  } else {
+    li.appendChild(line("", `${interested.length} student(s) accepted:`));
+    for (const x of interested) {
+      const who = x.responder;
+      const row = document.createElement("div");
+      row.appendChild(line("", `${who.full_name}${who.study_year ? ", year " + who.study_year : ""}${who.bio ? " - " + who.bio : ""}`));
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      actions.append(
+        actionButton("Confirm", false, `Confirm ${who.full_name}`, () =>
+          act("confirm_response", { p_request: r.request_id, p_responder: who.profile_id },
+              `Confirmed ${who.full_name}. The request is closed.`)),
+        actionButton("Decline", true, `Decline ${who.full_name}`, () =>
+          act("decline_response", { p_request: r.request_id, p_responder: who.profile_id },
+              `Declined ${who.full_name}.`))
+      );
+      row.appendChild(actions);
+      li.appendChild(row);
+    }
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  actions.appendChild(actionButton("Delete request", true, `Delete my request about ${r.subjects.name}`, async () => {
+    if (confirm("Delete this request? Students who accepted it will be told.")) {
+      await act("cancel_request", { p_request: r.request_id }, "Request deleted.");
+    }
+  }));
+  li.appendChild(actions);
+  return li;
+}
+
+function waitingItem(a) {
+  const r = a.study_requests;
+  const li = document.createElement("li");
+  headLines(li, r.subjects.name, r.subjects.code, r.proposed_start, r.duration_minutes, r.locations.name, r.message);
+  li.appendChild(line("", `From ${r.owner.full_name}`));
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  actions.appendChild(actionButton("Withdraw", true, `Withdraw from ${r.owner.full_name}'s request`, () =>
+    act("withdraw_interest", { p_request: r.request_id }, "You withdrew your answer.")));
+  li.appendChild(actions);
   return li;
 }
 
 async function render() {
-  const [mine, accepted] = await Promise.all([loadMine(), loadAccepted()]);
+  const [mine, answered, notes] = await Promise.all([loadMine(), loadAnswered(), loadNotes()]);
+
 
   const sessions = [];
-  for (const r of mine.filter(x => x.status === "matched")) {
-    const hit = r.request_responses.find(x => x.status === "accepted");
+  for (const r of mine.filter(x => x.status === "confirmed")) {
+    const hit = r.request_responses.find(x => x.status === "confirmed");
     if (!hit) continue;
-    sessions.push({
-      subject: r.subjects.name, code: r.subjects.code, start: r.proposed_start,
-      duration: r.duration_minutes, place: r.locations.name, message: r.message,
-      partnerId: hit.responder.profile_id, partnerName: hit.responder.full_name
-    });
+    sessions.push({ requestId: r.request_id, subject: r.subjects.name, code: r.subjects.code,
+      start: r.proposed_start, duration: r.duration_minutes, place: r.locations.name, message: r.message,
+      partnerId: hit.responder.profile_id, partnerName: hit.responder.full_name });
   }
-  for (const a of accepted) {
+  for (const a of answered.filter(x => x.status === "confirmed" && x.study_requests.status === "confirmed")) {
     const r = a.study_requests;
-    if (!r) continue;
-    sessions.push({
-      subject: r.subjects.name, code: r.subjects.code, start: r.proposed_start,
-      duration: r.duration_minutes, place: r.locations.name, message: r.message,
-      partnerId: r.owner.profile_id, partnerName: r.owner.full_name
-    });
+    sessions.push({ requestId: r.request_id, subject: r.subjects.name, code: r.subjects.code,
+      start: r.proposed_start, duration: r.duration_minutes, place: r.locations.name, message: r.message,
+      partnerId: r.owner.profile_id, partnerName: r.owner.full_name });
   }
-  sessions.sort((a, b) => new Date(a.start) - new Date(b.start));
+  sessions.sort((x, y) => new Date(x.start) - new Date(y.start));
+
 
   const contacts = new Map();
   const ids = [...new Set(sessions.map(s => s.partnerId))];
@@ -104,38 +184,25 @@ async function render() {
     for (const c of data || []) contacts.set(c.profile_id, c.telegram_username);
   }
 
-  sessionList.innerHTML = "";
-  if (sessions.length === 0) sessionList.appendChild(line("", "No sessions yet. Swipe right on a request or wait for someone to accept yours."));
-  for (const s of sessions) sessionList.appendChild(sessionItem(s, contacts));
-
-  openList.innerHTML = "";
-  const open = mine.filter(x => x.status === "open");
-  if (open.length === 0) openList.appendChild(line("", "You have no open requests."));
-  for (const r of open) openList.appendChild(openItem(r));
-}
-
-async function cancelRequest(requestId, button) {
-  button.disabled = true;
-  const { error } = await db.from("study_requests").delete().eq("request_id", requestId);
-  if (error) {
-    button.disabled = false;
-    setStatus(pageStatus, "Could not cancel: " + error.message, true);
-    return;
-  }
-  setStatus(pageStatus, "Request cancelled.");
-  render();
+  const fill = (ul, items, empty) => {
+    ul.innerHTML = "";
+    if (items.length === 0) ul.appendChild(line("", empty));
+    for (const li of items) ul.appendChild(li);
+  };
+  fill(noteList, notes.map(noteItem), "No notifications yet.");
+  fill(sessionList, sessions.map(s => sessionItem(s, contacts)), "No confirmed sessions yet.");
+  fill(openList, mine.filter(x => x.status === "open").map(openItem), "You have no open requests.");
+  fill(waitingList,
+       answered.filter(x => x.status === "accepted" && x.study_requests.status === "open").map(waitingItem),
+       "You are not waiting for any request.");
 }
 
 
 async function init() {
-
-  // Temporary
-  // if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-  //   setStatus(siStatus, "js/supabase-client.js requires Supabase URL and public key.", true);
-  //   return;
-  // }
-  // checking public keys and project URL
-
+  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
+    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    return;
+  }
   if (!(await requireLogin())) return;
 
   try {
