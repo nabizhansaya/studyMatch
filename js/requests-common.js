@@ -44,10 +44,12 @@ async function fetchRequests() {
   return data;
 }
 
+
 async function acceptRequest(requestId) {
   const { error } = await db.rpc("accept_request", { p_request: requestId });
   if (error) throw error;
 }
+
 
 async function skipRequest(requestId, myId) {
   const { error } = await db.from("request_responses")
@@ -67,6 +69,7 @@ async function resetSkips(myId) {
   if (error) throw error;
 }
 
+
 function requestLines(r) {
   const who = [r.owner_name, r.owner_faculty, r.owner_year ? `year ${r.owner_year}` : null]
     .filter(Boolean).join(" - ");
@@ -77,28 +80,22 @@ function requestLines(r) {
   };
 }
 
-async function showMatch(r) {
-  const { data } = await db.from("profile_contacts")
-    .select("telegram_username").eq("profile_id", r.owner_id).maybeSingle();
 
+async function showMatch(r) {
   const dlg = document.createElement("dialog");
   dlg.setAttribute("aria-labelledby", "matchTitle");
 
   const title = document.createElement("h2");
   title.id = "matchTitle";
-  title.textContent = "It's a match!";
+  title.textContent = "Request accepted";
 
   const info = document.createElement("p");
   info.textContent = `You accepted ${r.owner_name}'s request: ${r.subject_name}, ` +
                      `${formatWhen(r.proposed_start)}, ${r.location_name}.`;
 
-  const contact = document.createElement("p");
-  const link = data ? telegramAnchor(data.telegram_username) : null;
-  if (link) {
-    contact.append("Write to them on Telegram: ", link);
-  } else {
-    contact.textContent = `${r.owner_name} has not added a Telegram username yet. Check Sessions later.`;
-  }
+  const next = document.createElement("p");
+  next.textContent = `${r.owner_name} can now confirm you. You will get a notification, and ` +
+                     "the Telegram link appears in Sessions only after the confirmation.";
 
   const actions = document.createElement("div");
   actions.className = "actions";
@@ -111,7 +108,7 @@ async function showMatch(r) {
   sessions.textContent = "Go to my sessions";
   actions.append(close, sessions);
 
-  dlg.append(title, info, contact, actions);
+  dlg.append(title, info, next, actions);
   document.body.appendChild(dlg);
   dlg.addEventListener("close", () => dlg.remove());
   dlg.showModal();
