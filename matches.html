@@ -16,16 +16,27 @@
   <main>
     <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
 
+    <section class="card" aria-labelledby="notes-title">
+      <h2 id="notes-title">Recent notifications</h2>
+      <ul id="noteList" class="people"></ul>
+    </section>
+
     <section class="card" aria-labelledby="sessions-title">
-      <h2 id="sessions-title">My sessions</h2>
-      <p class="hint">Sessions where a request was accepted. Contact your partner on Telegram to confirm the details.</p>
+      <h2 id="sessions-title">Confirmed sessions</h2>
+      <p class="hint">Both sides agreed. Contact your partner on Telegram to arrange the details.</p>
       <ul id="sessionList" class="people"></ul>
     </section>
 
     <section class="card" aria-labelledby="open-title">
       <h2 id="open-title">My open requests</h2>
-      <p class="hint">Waiting for someone to accept.</p>
+      <p class="hint">Students who accepted your request appear here. Confirm the one you like, and the request is closed.</p>
       <ul id="openList" class="people"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="waiting-title">
+      <h2 id="waiting-title">Requests I accepted</h2>
+      <p class="hint">Waiting for the owner to confirm.</p>
+      <ul id="waitingList" class="people"></ul>
     </section>
   </main>
 
