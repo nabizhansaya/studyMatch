@@ -180,15 +180,12 @@ async function doUndo() {
   }
 }
 
+
 async function init() {
-
-  // Temporary
-  // if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-  //   setStatus(siStatus, "js/supabase-client.js requires Supabase URL and public key.", true);
-  //   return;
-  // }
-  // checking public keys and project URL
-
+  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
+    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    return;
+  }
   if (!(await requireLogin())) return;
 
   try {
@@ -209,6 +206,7 @@ async function init() {
     try { await resetSkips(myId); load(); }
     catch (err) { setStatus(pageStatus, "Could not reset: " + err.message, true); }
   });
+  
   const helpDialog = el("helpDialog");
   el("helpBtn").addEventListener("click", () => helpDialog.showModal());
   el("helpClose").addEventListener("click", () => helpDialog.close());
@@ -217,7 +215,7 @@ async function init() {
       localStorage.setItem("studymatch.helpSeen", "yes");
       helpDialog.showModal();
     }
-  } catch (e) {}
+  } catch (e) { /* storage blocked: skip the first-visit help */ }
 
   skipBtn.addEventListener("click", () => doSkip(deck[0]));
   undoBtn.addEventListener("click", doUndo);
