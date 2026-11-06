@@ -88,7 +88,7 @@ profileForm.addEventListener("submit", async (event) => {
     bio: bioInput.value.trim() || null
   }).eq("profile_id", myId).select("profile_id");
 
- 
+
   const error = updateError ||
     ((updatedRows || []).length === 0
       ? new Error("No profile row was updated. Sign out and sign in again, or contact the team.")
@@ -149,7 +149,12 @@ subjectsForm.addEventListener("submit", async (event) => {
 });
 
 
+
 async function init() {
+  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
+    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    return;
+  }
   const session = await requireLogin();
   if (!session) return;
 
