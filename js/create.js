@@ -6,7 +6,7 @@ const cDuration  = document.getElementById("cDuration");
 const cLocation  = document.getElementById("cLocation");
 const cMessage   = document.getElementById("cMessage");
 
-function toLocalInput(d) {
+function toLocalInput(d) { 
   const p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
@@ -52,14 +52,10 @@ createForm.addEventListener("submit", async event => {
 
 
 async function init() {
-
-  // Temporary
-  // if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-  //   setStatus(siStatus, "js/supabase-client.js requires Supabase URL and public key.", true);
-  //   return;
-  // }
-  // checking public keys and project URL
-
+  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
+    setStatus(cStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    return;
+  }
   if (!(await requireLogin())) return;
 
   try {
