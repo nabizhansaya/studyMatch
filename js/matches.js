@@ -1,10 +1,48 @@
 const pageStatus  = document.getElementById("pageStatus");
-const noteList    = document.getElementById("noteList");
 const sessionList = document.getElementById("sessionList");
 const openList    = document.getElementById("openList");
 const waitingList = document.getElementById("waitingList");
 
 let myId = null;
+
+
+const TAB_IDS = ["confirmed", "open", "accepted"];
+
+function showTab(id) {
+  for (const t of TAB_IDS) {
+    const selected = t === id;
+    const tab = document.getElementById("tab-" + t);
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    document.getElementById("panel-" + t).hidden = !selected;
+  }
+  if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+}
+
+function setCount(id, n) {
+  document.getElementById("count-" + id).textContent = n;
+}
+
+function setupTabs() {
+  for (const t of TAB_IDS) {
+    document.getElementById("tab-" + t).addEventListener("click", () => showTab(t));
+  }
+  // arrow keys move between the tabs
+  document.querySelector(".tabs").addEventListener("keydown", e => {
+    const current = TAB_IDS.findIndex(t => document.getElementById("tab-" + t).getAttribute("aria-selected") === "true");
+    let next = -1;
+    if (e.key === "ArrowRight") next = (current + 1) % TAB_IDS.length;
+    if (e.key === "ArrowLeft") next = (current + TAB_IDS.length - 1) % TAB_IDS.length;
+    if (next >= 0) { showTab(TAB_IDS[next]); document.getElementById("tab-" + TAB_IDS[next]).focus(); }
+  });
+
+  const fromHash = () => {
+    const id = location.hash.slice(1);
+    showTab(TAB_IDS.includes(id) ? id : "confirmed");
+  };
+  window.addEventListener("hashchange", fromHash);
+  fromHash();
+}
 
 
 function line(className, text) {
@@ -69,20 +107,6 @@ async function loadAnswered() {
   return data.filter(a => a.study_requests);
 }
 
-async function loadNotes() {
-  const { data } = await db.from("notifications")
-    .select("notification_id, type, is_read, created_at")
-    .order("created_at", { ascending: false }).limit(10);
-  return data || [];
-}
-
-
-function noteItem(n) {
-  const li = document.createElement("li");
-  li.appendChild(line("", (NOTE_TEXT[n.type] || "Notification") + (n.is_read ? "" : " (new)")));
-  li.appendChild(line("hint", formatWhen(n.created_at)));
-  return li;
-}
 
 function sessionItem(s, contacts) {
   const li = document.createElement("li");
@@ -156,7 +180,7 @@ function waitingItem(a) {
 }
 
 async function render() {
-  const [mine, answered, notes] = await Promise.all([loadMine(), loadAnswered(), loadNotes()]);
+  const [mine, answered] = await Promise.all([loadMine(), loadAnswered()]);
 
 
   const sessions = [];
@@ -189,12 +213,14 @@ async function render() {
     if (items.length === 0) ul.appendChild(line("", empty));
     for (const li of items) ul.appendChild(li);
   };
-  fill(noteList, notes.map(noteItem), "No notifications yet.");
+  const open = mine.filter(x => x.status === "open");
+  const waiting = answered.filter(x => x.status === "accepted" && x.study_requests.status === "open");
   fill(sessionList, sessions.map(s => sessionItem(s, contacts)), "No confirmed sessions yet.");
-  fill(openList, mine.filter(x => x.status === "open").map(openItem), "You have no open requests.");
-  fill(waitingList,
-       answered.filter(x => x.status === "accepted" && x.study_requests.status === "open").map(waitingItem),
-       "You are not waiting for any request.");
+  fill(openList, open.map(openItem), "You have no open requests.");
+  fill(waitingList, waiting.map(waitingItem), "You are not waiting for any request.");
+  setCount("confirmed", sessions.length);
+  setCount("open", open.length);
+  setCount("accepted", waiting.length);
 }
 
 
@@ -212,11 +238,8 @@ async function init() {
       return;
     }
     renderNav("matches", myId);
+    setupTabs();
     await render();
-
-
-    await db.from("notifications").update({ is_read: true }).eq("is_read", false);
-    if (window.refreshNavBadge) window.refreshNavBadge();
   } catch (err) {
     setStatus(pageStatus, "Could not load your sessions: " + err.message, true);
   }

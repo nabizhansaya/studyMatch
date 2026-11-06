@@ -20,6 +20,7 @@ function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
   }
 }
 
+
 async function requireLogin() {
   const { data } = await db.auth.getSession();
   if (!data.session) {
@@ -44,6 +45,7 @@ async function signOut() {
 
 const ASSET_BASE = "assets/";
 
+
 function formatWhen(iso) {
   return new Date(iso).toLocaleString([], {
     weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
@@ -65,6 +67,7 @@ function telegramAnchor(username) {
   a.textContent = "@" + username;
   return a;
 }
+
 
 const NAV_ITEMS = [
   { id: "swipe",   href: "swipe.html",   icon: "\u21C4", label: "Swipe" },
@@ -102,7 +105,7 @@ const NOTE_TEXT = {
 
 const SOUND_KEY = "studymatch.sound";
 function soundEnabled() {
-  try { return localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { return false; }
+  try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch (e) { return true; }
 }
 function setSoundEnabled(on) {
   try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch (e) { /* ignore */ }
@@ -128,6 +131,65 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastBox.hidden = true; }, 10000);
 }
 
+
+async function openNotifications() {
+  let dlg = document.getElementById("notesDialog");
+  if (!dlg) {
+    dlg = document.createElement("dialog");
+    dlg.id = "notesDialog";
+    dlg.setAttribute("aria-labelledby", "notesTitle");
+    const title = document.createElement("h2");
+    title.id = "notesTitle";
+    title.textContent = "Notifications";
+    const ul = document.createElement("ul");
+    ul.id = "notesList";
+    ul.className = "people";
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "Close";
+    close.addEventListener("click", () => dlg.close());
+    const sessions = document.createElement("a");
+    sessions.href = "matches.html";
+    sessions.textContent = "Open Sessions";
+    actions.append(close, sessions);
+    dlg.append(title, ul, actions);
+    document.body.appendChild(dlg);
+  }
+  const list = dlg.querySelector("#notesList");
+  list.textContent = "Loading...";
+  dlg.showModal();
+
+  const { data, error } = await db.from("notifications")
+    .select("notification_id, type, is_read, created_at")
+    .order("created_at", { ascending: false }).limit(20);
+  list.textContent = "";
+  if (error) {
+    list.textContent = "Could not load notifications: " + error.message;
+    return;
+  }
+  if (data.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No notifications yet.";
+    list.appendChild(li);
+  }
+  for (const n of data) {
+    const li = document.createElement("li");
+    const text = document.createElement("div");
+    text.textContent = (NOTE_TEXT[n.type] || "Notification") + (n.is_read ? "" : " (new)");
+    const when = document.createElement("div");
+    when.className = "hint";
+    when.textContent = formatWhen(n.created_at);
+    li.append(text, when);
+    list.appendChild(li);
+  }
+
+
+  await db.from("notifications").update({ is_read: true }).eq("is_read", false);
+  if (window.refreshNavBadge) window.refreshNavBadge();
+}
+
 function renderNav(active, myId) {
   toastBox = document.createElement("div");
   toastBox.className = "toast";
@@ -136,18 +198,34 @@ function renderNav(active, myId) {
   toastBox.hidden = true;
   document.body.appendChild(toastBox);
 
+
+  const actions = document.createElement("div");
+  actions.className = "header-actions";
+
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.hidden = true;
+  badge.setAttribute("aria-hidden", "true");
+  const bell = document.createElement("button");
+  bell.type = "button";
+  bell.className = "icon-btn";
+  bell.setAttribute("aria-label", "Notifications");
+  bell.title = "Notifications";
+  bell.append(svgIcon("i-bell"), badge);
+  bell.addEventListener("click", openNotifications);
+
   const signOutButton = document.createElement("button");
   signOutButton.type = "button";
+  signOutButton.className = "signout";
   signOutButton.textContent = "Sign out";
   signOutButton.addEventListener("click", signOut);
-  document.querySelector("header").appendChild(signOutButton);
+
+  actions.append(bell, createThemeButton(), signOutButton);
+  document.querySelector("header").appendChild(actions);
 
   const nav = document.createElement("nav");
   nav.className = "tabbar";
   nav.setAttribute("aria-label", "Main");
-  const badge = document.createElement("span");
-  badge.className = "badge";
-  badge.hidden = true;
 
   for (const item of NAV_ITEMS) {
     const link = document.createElement("a");
@@ -157,7 +235,6 @@ function renderNav(active, myId) {
     const label = document.createElement("span");
     label.textContent = item.label;
     link.append(icon, label);
-    if (item.id === "matches") link.appendChild(badge);
     nav.appendChild(link);
   }
   document.body.appendChild(nav);
@@ -169,7 +246,7 @@ function renderNav(active, myId) {
       .select("notification_id", { count: "exact", head: true }).eq("is_read", false);
     badge.hidden = !count;
     badge.textContent = count || "";
-    badge.setAttribute("aria-label", `${count} new`);
+    bell.setAttribute("aria-label", count ? `Notifications, ${count} new` : "Notifications");
   }
   window.refreshNavBadge = refreshBadge;
   refreshBadge();

@@ -1,3 +1,5 @@
+document.querySelector("header").appendChild(createThemeButton());
+
 const signinForm = document.getElementById("signinForm");
 const signupForm = document.getElementById("signupForm");
 const siStatus   = document.getElementById("siStatus");
@@ -20,7 +22,6 @@ signinForm.addEventListener("submit", async (event) => {
   }
   location.href = "swipe.html";
 });
-
 
 signupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -58,16 +59,13 @@ signupForm.addEventListener("submit", async (event) => {
 
 
 async function init() {
-
-  // Temporary
-  // if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-  //   setStatus(siStatus, "js/supabase-client.js requires Supabase URL and public key.", true);
-  //   return;
-  // }
-  // checking public keys and project URL
+  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
+    setStatus(siStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    return;
+  }
 
   const { data: sessionData } = await db.auth.getSession();
-  if (sessionData.session) {
+  if (sessionData.session) {           // already logged in
     location.href = "swipe.html";
     return;
   }
