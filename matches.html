@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StudyMatch - my requests and sessions</title>
+  <script src="js/theme.js"></script>
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -16,25 +17,35 @@
   <main>
     <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
 
-    <section class="card" aria-labelledby="notes-title">
-      <h2 id="notes-title">Recent notifications</h2>
-      <ul id="noteList" class="people"></ul>
-    </section>
+    <div class="tabs" role="tablist" aria-label="Sessions sections">
+      <button type="button" role="tab" id="tab-confirmed" aria-controls="panel-confirmed" aria-selected="true" data-tab="confirmed">
+        Confirmed <span class="count" id="count-confirmed">0</span>
+      </button>
+      <button type="button" role="tab" id="tab-open" aria-controls="panel-open" aria-selected="false" tabindex="-1" data-tab="open">
+        My requests <span class="count" id="count-open">0</span>
+      </button>
+      <button type="button" role="tab" id="tab-accepted" aria-controls="panel-accepted" aria-selected="false" tabindex="-1" data-tab="accepted">
+        I accepted <span class="count" id="count-accepted">0</span>
+      </button>
+    </div>
 
-    <section class="card" aria-labelledby="sessions-title">
-      <h2 id="sessions-title">Confirmed sessions</h2>
+    <section class="card" id="panel-confirmed" role="tabpanel" aria-labelledby="tab-confirmed">
+      <h2>Confirmed sessions</h2>
       <p class="hint">Both sides agreed. Contact your partner on Telegram to arrange the details.</p>
       <ul id="sessionList" class="people"></ul>
     </section>
 
-    <section class="card" aria-labelledby="open-title">
-      <h2 id="open-title">My open requests</h2>
+    <section class="card" id="panel-open" role="tabpanel" aria-labelledby="tab-open" hidden>
+      <div class="panel-head">
+        <h2>My open requests</h2>
+        <a class="button-link" href="create.html">+ New request</a>
+      </div>
       <p class="hint">Students who accepted your request appear here. Confirm the one you like, and the request is closed.</p>
       <ul id="openList" class="people"></ul>
     </section>
 
-    <section class="card" aria-labelledby="waiting-title">
-      <h2 id="waiting-title">Requests I accepted</h2>
+    <section class="card" id="panel-accepted" role="tabpanel" aria-labelledby="tab-accepted" hidden>
+      <h2>Requests I accepted</h2>
       <p class="hint">Waiting for the owner to confirm.</p>
       <ul id="waitingList" class="people"></ul>
     </section>

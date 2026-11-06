@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StudyMatch - my profile</title>
+  <script src="js/theme.js"></script>
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,22 +13,6 @@
     <img class="logo" src="assets/logo.svg" alt="" width="32" height="32">
     <h1>StudyMatch</h1>
   </header>
-
-
-
-  <section class="card" aria-labelledby="insights-title">
-      <h2 id="insights-title"> StudyMatch Platform Insights</h2>
-      <p class="hint">Live system analytics summary from backend database reports.</p>
-      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
-        <p style="margin: 0; font-size: 0.95rem;">Total System Study Requests: <strong>90</strong></p>
-        <p style="margin: 0; font-size: 0.95rem;">Location Distribution: <strong>15 requests per venue (Library, Cafeteria, etc.)</strong></p>
-        <p style="margin: 0; font-size: 0.95rem;">Status: <strong style="color: #10b981;">Database Connected & Live</strong></p>
-      </div>
-    </section>
-
-  
-
-  
 
   <main>
     <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
@@ -71,8 +56,8 @@
 
     <section class="card" aria-labelledby="sound-title">
       <h2 id="sound-title">Notifications</h2>
-      <label class="check-line"><input id="soundToggle" type="checkbox"> Play a short sound when someone accepts my request</label>
-      <p class="hint">Off by default. A message also appears on the screen, so you never need the sound.</p>
+      <label class="check-line"><input id="soundToggle" type="checkbox"> Play a short sound when a notification arrives</label>
+      <p class="hint">On by default. Untick it to turn the sound off. A message also appears on the screen, so you never need the sound. Your browser may stay silent until you have tapped or clicked somewhere on the page.</p>
       <button id="soundTest" type="button" class="secondary">Show a test notification</button>
       <p id="soundStatus" class="status" role="status" aria-live="polite"></p>
     </section>
@@ -81,7 +66,7 @@
       <h2 id="subjects-title">Subjects I want to study</h2>
       <form id="subjectsForm">
         <fieldset>
-          <legend class="hint">Mark every subject you need a study partner for</legend>
+          <legend class="hint">Tick every subject you need a study partner for</legend>
           <div id="subjectChecks" class="checks"></div>
         </fieldset>
         <button type="submit">Save subjects</button>
