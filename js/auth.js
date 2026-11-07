@@ -21,11 +21,58 @@ function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
 }
 
 
+const IDLE_MINUTES = 60;
+const ACTIVE_KEY = "studymatch.lastActive";
+
+function markActive() {
+  try { localStorage.setItem(ACTIVE_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+}
+
+function idleExpired() {
+  try {
+    const last = Number(localStorage.getItem(ACTIVE_KEY));
+    return last > 0 && Date.now() - last > IDLE_MINUTES * 60000;
+  } catch (e) { return false; }
+}
+
+
+function startIdleTimer() {
+  markActive();
+  let lastMark = 0;
+  const onActivity = () => {
+    const now = Date.now();
+    if (now - lastMark > 30000) { lastMark = now; markActive(); }
+  };
+  for (const name of ["click", "keydown", "touchstart", "scroll", "pointermove"]) {
+    window.addEventListener(name, onActivity, { passive: true });
+  }
+  setInterval(() => { if (idleExpired()) signOut("timeout"); }, 60000);
+}
+
+
+function clearStoredSessions() {
+  for (const store of [window.localStorage, window.sessionStorage]) {
+    try {
+      for (const key of Object.keys(store)) {
+        if (key.startsWith("sb-") && key.endsWith("-auth-token")) store.removeItem(key);
+      }
+    } catch (e) { /* ignore */ }
+  }
+}
+
+
 async function requireLogin() {
   const { data } = await db.auth.getSession();
   if (!data.session) {
     location.href = "login.html";
     return null;
+  }
+  if (!keepSignedIn()) {
+    if (idleExpired()) {
+      await signOut("timeout");
+      return null;
+    }
+    startIdleTimer();
   }
   return data.session;
 }
@@ -37,9 +84,10 @@ async function getMyProfileId() {
   return data;
 }
 
-async function signOut() {
-  await db.auth.signOut();
-  location.href = "login.html";
+async function signOut(reason) {
+  try { await db.auth.signOut({ scope: "local" }); } catch (e) { /* ignore */ }
+  clearStoredSessions();
+  location.href = "login.html" + (reason ? "?notice=" + reason : "");
 }
 
 
@@ -131,7 +179,7 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastBox.hidden = true; }, 10000);
 }
 
-
+// ---- Notifications panel (the bell in the top bar) ----------------
 async function openNotifications() {
   let dlg = document.getElementById("notesDialog");
   if (!dlg) {
@@ -148,10 +196,12 @@ async function openNotifications() {
     actions.className = "actions";
     const close = document.createElement("button");
     close.type = "button";
+    close.className = "secondary";
     close.textContent = "Close";
     close.addEventListener("click", () => dlg.close());
     const sessions = document.createElement("a");
     sessions.href = "matches.html";
+    sessions.className = "button-link";
     sessions.textContent = "Open Sessions";
     actions.append(close, sessions);
     dlg.append(title, ul, actions);
@@ -218,7 +268,7 @@ function renderNav(active, myId) {
   signOutButton.type = "button";
   signOutButton.className = "signout";
   signOutButton.textContent = "Sign out";
-  signOutButton.addEventListener("click", signOut);
+  signOutButton.addEventListener("click", () => signOut());
 
   actions.append(bell, createThemeButton(), signOutButton);
   document.querySelector("header").appendChild(actions);
