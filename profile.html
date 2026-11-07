@@ -75,9 +75,34 @@
     </section>
 
     
+
+    <section class="card danger-zone" aria-labelledby="delete-title">
+      <h2 id="delete-title">Delete my account</h2>
+      <p class="hint">This permanently deletes your account, your profile, your requests and your sessions. To be sure it is you, we send a code to your e-mail address first.</p>
+      <button id="deleteBtn" type="button" class="danger">Delete my account</button>
+    </section>
   </main>
 
+  <dialog id="deleteDialog" aria-labelledby="deleteTitle">
+    <h2 id="deleteTitle">Delete my account</h2>
+    <p>This cannot be undone. Press the button and we send a code to your e-mail address.</p>
+    <div id="deleteStep1" class="actions">
+      <button id="sendCodeBtn" type="button">Send me a code</button>
+      <button id="deleteCancel1" type="button" class="secondary">Cancel</button>
+    </div>
+    <div id="deleteStep2" hidden>
+      <label for="deleteCode">Code from the e-mail</label>
+      <input id="deleteCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+      <div class="actions">
+        <button id="confirmDeleteBtn" type="button" class="danger">Delete my account for good</button>
+        <button id="deleteCancel2" type="button" class="secondary">Cancel</button>
+      </div>
+    </div>
+    <p id="deleteStatus" class="status" role="status" aria-live="polite"></p>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/profile.js"></script>
