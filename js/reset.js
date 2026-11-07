@@ -28,7 +28,7 @@ resetForm.addEventListener("submit", async (event) => {
   button.disabled = false;
 
   if (error) {
-    setStatus(rsStatus, error.message, true); 
+    setStatus(rsStatus, error.message, true);
     return;
   }
   try { await db.auth.signOut({ scope: "local" }); } catch (e) { /* ignore */ }
@@ -38,10 +38,10 @@ resetForm.addEventListener("submit", async (event) => {
 
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(resetNote, "Open js/config.js and paste your Supabase URL and public key.", true);
+    setStatus(resetNote, "The service is not available right now. Please try again later.", true);
     return;
   }
-
+  
   const { data } = await db.auth.getSession();
   if (!data.session) {
     setStatus(resetNote, "This link is not valid or has expired. Please ask for a new one on the Forgot password page.", true);
