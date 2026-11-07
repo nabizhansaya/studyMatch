@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StudyMatch - forgot password</title>
+  <script src="js/theme.js"></script>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <img class="logo" src="assets/logo.svg" alt="" width="32" height="32">
+    <h1>StudyMatch</h1>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="forgot-title">
+      <h2 id="forgot-title">Forgot your password?</h2>
+      <p class="hint">Enter your e-mail address. If an account exists, we send you a link to choose a new password.</p>
+      <form id="forgotForm">
+        <label for="fgEmail">University e-mail</label>
+        <input id="fgEmail" type="email" autocomplete="email" required>
+        <button type="submit">Send the link</button>
+      </form>
+      <p id="fgStatus" class="status" role="status" aria-live="polite"></p>
+      <div class="auth-switch">
+        <a class="button-link secondary" href="login.html">Back to sign in</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/forgot.js"></script>
+</body>
+</html>
