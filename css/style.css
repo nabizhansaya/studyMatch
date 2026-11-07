@@ -161,7 +161,7 @@ header a { color: var(--on-accent); }
 .hero { position: relative; margin: 0 auto 1rem; max-width: 720px; border-radius: 10px; overflow: hidden; }
 .hero-img { display: block; width: 100%; height: auto; }
 .hero-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6rem 1rem;
-             background: rgba(18, 22, 27, 0.88); color: #ffffff; }   /* dark overlay keeps the text readable */
+             background: rgba(18, 22, 27, 0.88); color: #ffffff; }
 .hero-text h2 { margin: 0; font-size: 1.25rem; }
 .hero-text p { margin: 0.1rem 0 0; }
 
@@ -171,7 +171,7 @@ header a { color: var(--on-accent); }
 .swipe-demo { position: relative; height: 70px; margin: 0.75rem 0; overflow: hidden;
               display: flex; align-items: center; justify-content: center; }
 .demo-card { padding: 0.5rem 0.9rem; border: 2px solid var(--field-line); border-radius: 10px;
-             background: var(--card); animation: demo-swipe 2.4s ease-in-out 2; }   /* 2 x 2.4 s, then it stops */
+             background: var(--card); animation: demo-swipe 2.4s ease-in-out 2; }
 .demo-tag { position: absolute; top: 4px; font-weight: 800; border: 2px solid currentColor;
             border-radius: 6px; padding: 0 0.4rem; opacity: 0; }
 .demo-yes { right: 8px; color: var(--ok); animation: demo-yes 2.4s ease-in-out 2; }
@@ -236,7 +236,6 @@ button:active:not(:disabled) { transform: scale(0.98); }
 a.button-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border-radius: 10px;
                 background: var(--accent); color: var(--on-accent); text-decoration: none; font-weight: 600; }
 
-
 .auth-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-top: 0.75rem; }
 .auth-switch p { margin: 0; }
 a.button-link.secondary { background: transparent; color: var(--text); border: 1px solid var(--field-line); }
@@ -252,3 +251,37 @@ a.button-link.secondary { background: transparent; color: var(--text); border: 1
 button.danger { background: #b91c1c; border-color: #b91c1c; color: #ffffff; }
 button.danger:hover:not(:disabled) { background: #991b1b; }
 .danger-zone { border-color: var(--error); }
+
+
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.swipe-main { height: auto;
+              min-height: calc(100vh - var(--header-h) - var(--tab-h));
+              min-height: calc(100dvh - var(--header-h) - var(--tab-h) - env(safe-area-inset-bottom, 0px)); }
+.swipe-stage { display: flex; flex-direction: column; min-height: 340px; }
+.swipe-stage > * { flex: 1 1 auto; }
+.swipe-card { height: auto; }
+.card.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; }
+.empty-img { width: auto; max-width: 100%; max-height: 32vh; object-fit: contain; }
+
+dialog { max-height: 90vh; max-height: 90dvh; overflow: auto; }
+ul.people li, .swipe-card, .card, .tabs button { overflow-wrap: anywhere; }
+
+@media (max-height: 520px) {
+  :root { --header-h: 52px; --tab-h: 52px; }
+  .tabbar a { font-size: 0.7rem; }
+  .empty-img { display: none; }
+  .swipe-stage { min-height: 260px; }
+}
+@media (min-width: 900px) {
+  main { max-width: 860px; }
+  .swipe-main { max-width: 640px; }
+}
+
+
+.savebar { position: sticky; z-index: 9; display: flex; align-items: center; justify-content: space-between;
+           gap: 1rem; margin-bottom: 1rem; padding: 0.6rem 1rem; background: var(--card);
+           border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+           bottom: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 0.5rem); }
+.savebar button { margin: 0; }
+.savebar .hint { margin: 0; }
