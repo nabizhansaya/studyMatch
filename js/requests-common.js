@@ -15,7 +15,6 @@ function fillFilters(options) {
   fillSelect(el("fLocation"), options.locations, "location_id", l => l.name, "Any place");
 }
 
-
 function readFilters() {
   let from = null, to = null;
   const dateInput = el("fDate");
