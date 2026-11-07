@@ -17,16 +17,16 @@
   <main>
     <p id="pageStatus" class="status" role="status" aria-live="polite"></p>
 
+    <form id="profileForm">
     <section class="card" aria-labelledby="about-title">
       <h2 id="about-title">About me</h2>
-      <form id="profileForm">
         <label for="fullName">Full name</label>
         <input id="fullName" type="text" maxlength="80" required>
 
         <div class="row">
           <div>
             <label for="faculty">Faculty</label>
-            <select id="faculty"></select>
+            <select id="faculty" data-searchable></select>
           </div>
           <div>
             <label for="studyYear">Year of study</label>
@@ -40,19 +40,30 @@
 
         <label for="location">Usual meeting place</label>
         <p class="hint">Suggested when you create a new request.</p>
-        <select id="location"></select>
+        <select id="location" data-searchable></select>
 
         <label for="bio">About me (optional)</label>
         <textarea id="bio" maxlength="300"></textarea>
 
         <label for="telegram">Telegram username</label>
-        <p class="hint">Shown only to students whose study request you accepted (or who accepted yours). Example: my_name</p>
+        <p class="hint">Shown only to a student whose session with you was confirmed by both of you. Example: my_name</p>
         <input id="telegram" type="text" maxlength="33" autocomplete="off">
-
-        <button type="submit">Save profile</button>
-      </form>
-      <p id="profileStatus" class="status" role="status" aria-live="polite"></p>
     </section>
+
+    <section class="card" aria-labelledby="subjects-title">
+      <h2 id="subjects-title">Subjects I want to study</h2>
+      <fieldset>
+          <legend class="hint">Tick every subject you need a study partner for</legend>
+          <div id="subjectChecks" class="checks"></div>
+        </fieldset>
+    </section>
+
+      <div class="savebar">
+        <span id="dirtyNote" class="hint" aria-live="polite"></span>
+        <button type="submit" id="saveBtn">Save changes</button>
+      </div>
+      <p id="profileStatus" class="status" role="status" aria-live="polite"></p>
+    </form>
 
     <section class="card" aria-labelledby="sound-title">
       <h2 id="sound-title">Notifications</h2>
@@ -61,20 +72,6 @@
       <button id="soundTest" type="button" class="secondary">Show a test notification</button>
       <p id="soundStatus" class="status" role="status" aria-live="polite"></p>
     </section>
-
-    <section class="card" aria-labelledby="subjects-title">
-      <h2 id="subjects-title">Subjects I want to study</h2>
-      <form id="subjectsForm">
-        <fieldset>
-          <legend class="hint">Tick every subject you need a study partner for</legend>
-          <div id="subjectChecks" class="checks"></div>
-        </fieldset>
-        <button type="submit">Save subjects</button>
-      </form>
-      <p id="subjectsStatus" class="status" role="status" aria-live="polite"></p>
-    </section>
-
-    
 
     <section class="card danger-zone" aria-labelledby="delete-title">
       <h2 id="delete-title">Delete my account</h2>
