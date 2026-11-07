@@ -14,7 +14,6 @@ wireShowPassword(document.getElementById("showPw"), [suPassword, suPassword2]);
 signupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-
   if (!checkPassword(suPassword.value, suEmail.value).ok) {
     setStatus(suStatus, "The password does not meet all the rules yet.", true);
     suPassword.focus();
@@ -58,7 +57,7 @@ signupForm.addEventListener("submit", async (event) => {
 
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(suStatus, "Open js/config.js and paste your Supabase URL and public key.", true);
+    setStatus(suStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   const { data, error } = await db.from("faculties").select("faculty_id, name").order("name");
