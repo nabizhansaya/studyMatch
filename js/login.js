@@ -18,7 +18,6 @@ signinForm.addEventListener("submit", async (event) => {
   button.disabled = true;
   setStatus(siStatus, "Signing in...");
 
-
   const keep = siKeep.checked;
   setKeepSignedIn(keep);
   clearStoredSessions();
@@ -40,14 +39,14 @@ signinForm.addEventListener("submit", async (event) => {
 
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(siStatus, "Open js/config.js and paste your Supabase URL and public key.", true);
+    setStatus(siStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   const notice = new URLSearchParams(location.search).get("notice");
   if (notice && NOTICES[notice]) setStatus(siStatus, NOTICES[notice]);
 
   const { data } = await db.auth.getSession();
-  if (data.session) location.href = "swipe.html";      // already signed in
+  if (data.session) location.href = "swipe.html";
 }
 
 init();
