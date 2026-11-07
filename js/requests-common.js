@@ -101,10 +101,12 @@ async function showMatch(r) {
   actions.className = "actions";
   const close = document.createElement("button");
   close.type = "button";
+  close.className = "secondary";
   close.textContent = "Keep swiping";
   close.addEventListener("click", () => dlg.close());
   const sessions = document.createElement("a");
   sessions.href = "matches.html";
+  sessions.className = "button-link";
   sessions.textContent = "Go to my sessions";
   actions.append(close, sessions);
 
