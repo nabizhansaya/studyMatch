@@ -6,7 +6,7 @@ const fgStatus   = document.getElementById("fgStatus");
 forgotForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(fgStatus, "Open js/config.js and paste your Supabase URL and public key.", true);
+    setStatus(fgStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   const button = forgotForm.querySelector("button");
