@@ -27,7 +27,7 @@ function setupTabs() {
   for (const t of TAB_IDS) {
     document.getElementById("tab-" + t).addEventListener("click", () => showTab(t));
   }
-  // arrow keys move between the tabs
+
   document.querySelector(".tabs").addEventListener("keydown", e => {
     const current = TAB_IDS.findIndex(t => document.getElementById("tab-" + t).getAttribute("aria-selected") === "true");
     let next = -1;
@@ -35,7 +35,6 @@ function setupTabs() {
     if (e.key === "ArrowLeft") next = (current + TAB_IDS.length - 1) % TAB_IDS.length;
     if (next >= 0) { showTab(TAB_IDS[next]); document.getElementById("tab-" + TAB_IDS[next]).focus(); }
   });
-
   const fromHash = () => {
     const id = location.hash.slice(1);
     showTab(TAB_IDS.includes(id) ? id : "confirmed");
@@ -182,7 +181,7 @@ function waitingItem(a) {
 async function render() {
   const [mine, answered] = await Promise.all([loadMine(), loadAnswered()]);
 
-
+  
   const sessions = [];
   for (const r of mine.filter(x => x.status === "confirmed")) {
     const hit = r.request_responses.find(x => x.status === "confirmed");
@@ -199,7 +198,7 @@ async function render() {
   }
   sessions.sort((x, y) => new Date(x.start) - new Date(y.start));
 
-
+ 
   const contacts = new Map();
   const ids = [...new Set(sessions.map(s => s.partnerId))];
   if (ids.length) {
@@ -226,7 +225,7 @@ async function render() {
 
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    setStatus(pageStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   if (!(await requireLogin())) return;
@@ -234,7 +233,7 @@ async function init() {
   try {
     myId = await getMyProfileId();
     if (myId === null) {
-      setStatus(pageStatus, "No profile found for this account. Create a new account first.", true);
+      setStatus(pageStatus, "We could not find your profile. Please sign out and create a new account.", true);
       return;
     }
     renderNav("matches", myId);
