@@ -1,4 +1,16 @@
-const SUPABASE_URL = "https://qbzlvwsziygpxacrdxef.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFiemx2d3N6aXlncHhhY3JkeGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MTE2MzgsImV4cCI6MjEwNzE4NzYzOH0.NhoNNnw4EfukDAX8KpG2eVbv37n_pLKNzb7e94Rk8FA";
+const KEEP_KEY = "studymatch.keepSignedIn";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+function keepSignedIn() {
+  try { return localStorage.getItem(KEEP_KEY) !== "no"; } catch (e) { return true; }
+}
+
+function setKeepSignedIn(on) {
+  try { localStorage.setItem(KEEP_KEY, on ? "yes" : "no"); } catch (e) { /* ignore */ }
+}
+
+
+function createDb(storage) {
+  return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storage: storage } });
+}
+
+const db = createDb(keepSignedIn() ? window.localStorage : window.sessionStorage);
