@@ -14,7 +14,7 @@ const subjectsStatus = document.getElementById("subjectsStatus");
 const TELEGRAM_RULE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
 
 let myId = null;
-let savedSubjectIds = new Set();
+let savedSubjectIds = new Set(); 
 
 
 async function loadProfile() {
@@ -150,9 +150,61 @@ subjectsForm.addEventListener("submit", async (event) => {
 
 
 
+function setupDeleteAccount() {
+  const dialog   = document.getElementById("deleteDialog");
+  const step1    = document.getElementById("deleteStep1");
+  const step2    = document.getElementById("deleteStep2");
+  const codeBox  = document.getElementById("deleteCode");
+  const status   = document.getElementById("deleteStatus");
+  let email = null;
+
+  document.getElementById("deleteBtn").addEventListener("click", () => {
+    step1.hidden = false;
+    step2.hidden = true;
+    codeBox.value = "";
+    setStatus(status, "");
+    dialog.showModal();
+  });
+  document.getElementById("deleteCancel1").addEventListener("click", () => dialog.close());
+  document.getElementById("deleteCancel2").addEventListener("click", () => dialog.close());
+
+
+  document.getElementById("sendCodeBtn").addEventListener("click", async () => {
+    setStatus(status, "Sending the code...");
+    const { data } = await db.auth.getUser();
+    email = data && data.user ? data.user.email : null;
+    if (!email) { setStatus(status, "Could not read your e-mail address. Sign in again.", true); return; }
+
+    const { error } = await db.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    if (error) { setStatus(status, error.message, true); return; }
+    step1.hidden = true;
+    step2.hidden = false;
+    setStatus(status, "We sent a code to " + email + ". Enter it below.");
+    codeBox.focus();
+  });
+
+
+  document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    const token = codeBox.value.trim();
+    if (!token) { setStatus(status, "Enter the code from the e-mail.", true); return; }
+    setStatus(status, "Checking the code...");
+
+    const { error: codeError } = await db.auth.verifyOtp({ email, token, type: "email" });
+    if (codeError) { setStatus(status, "The code is wrong or has expired.", true); return; }
+
+    const { error: deleteError } = await db.rpc("delete_my_account");
+    if (deleteError) { setStatus(status, "Could not delete the account: " + deleteError.message, true); return; }
+
+    try { await db.auth.signOut({ scope: "local" }); } catch (e) { /* the account is already gone */ }
+    clearStoredSessions();
+    location.href = "login.html?notice=deleted";
+  });
+}
+
+
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    setStatus(pageStatus, "Open js/config.js and paste your Supabase URL and public key.", true);
     return;
   }
   const session = await requireLogin();
@@ -165,6 +217,7 @@ async function init() {
       return;
     }
     renderNav("profile", myId);
+    setupDeleteAccount();
 
     const soundToggle = document.getElementById("soundToggle");
     const soundStatus = document.getElementById("soundStatus");
@@ -175,7 +228,7 @@ async function init() {
     });
     document.getElementById("soundTest").addEventListener("click", () => {
       showToast("Test: this is how a notification looks.");
-      if (soundEnabled()) playChime();
+      if (soundEnabled()) playChime();    
       setStatus(soundStatus, soundEnabled() ? "Message shown and sound played." : "Message shown (sound is off).");
     });
     await Promise.all([loadProfile(), loadSubjects()]);
