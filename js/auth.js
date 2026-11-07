@@ -18,6 +18,75 @@ function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
     option.textContent = labelFn(row);
     select.appendChild(option);
   }
+  if (select.hasAttribute("data-searchable")) buildSearchable(select);
+}
+
+
+function matchOption(select, text) {
+  const t = text.trim().toLowerCase();
+  return [...select.options].find(o => o.value !== "" && o.textContent.trim().toLowerCase() === t);
+}
+
+
+function syncSearchable(select) {
+  const input = select._combo;
+  if (!input) return;
+  const option = select.selectedOptions[0];
+  input.value = option && option.value !== "" ? option.textContent : "";
+  input.setCustomValidity("");
+}
+
+function buildSearchable(select) {
+  if (!select._combo) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = select.id + "-search";
+    input.className = "combo";
+    input.autocomplete = "off";
+    input.setAttribute("list", select.id + "-list");
+    const list = document.createElement("datalist");
+    list.id = select.id + "-list";
+    if (select.required) { input.required = true; select.required = false; }
+
+    input.addEventListener("input", () => {
+      const text = input.value.trim();
+      if (text === "") {
+        select.value = "";
+        input.setCustomValidity("");
+        select.dispatchEvent(new Event("change"));
+        return;
+      }
+      const hit = matchOption(select, text);
+      if (hit) {
+        select.value = hit.value;
+        input.setCustomValidity("");
+        select.dispatchEvent(new Event("change"));
+      } else {
+        input.setCustomValidity("Choose one of the options from the list.");
+      }
+    });
+
+    input.addEventListener("blur", () => syncSearchable(select));
+
+    select.after(input, list);
+    select.hidden = true;
+    select.tabIndex = -1;
+    select._combo = input;
+    select._list = list;
+    const label = document.querySelector('label[for="' + select.id + '"]');
+    if (label) label.setAttribute("for", input.id);
+  }
+
+  select._list.innerHTML = "";
+  for (const option of select.options) {
+    if (option.value === "") continue;
+    const entry = document.createElement("option");
+    entry.value = option.textContent;
+    select._list.appendChild(entry);
+  }
+  const first = select.options[0];
+  select._combo.placeholder = first && first.value === "" ? first.textContent + " (type to search)" : "Type to search";
+  syncSearchable(select);
 }
 
 
@@ -92,7 +161,6 @@ async function signOut(reason) {
 
 
 const ASSET_BASE = "assets/";
-
 
 function formatWhen(iso) {
   return new Date(iso).toLocaleString([], {
@@ -179,7 +247,6 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastBox.hidden = true; }, 10000);
 }
 
-// ---- Notifications panel (the bell in the top bar) ----------------
 async function openNotifications() {
   let dlg = document.getElementById("notesDialog");
   if (!dlg) {
