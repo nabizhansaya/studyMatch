@@ -183,7 +183,7 @@ async function doUndo() {
 
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(pageStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    setStatus(pageStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   if (!(await requireLogin())) return;
@@ -191,7 +191,7 @@ async function init() {
   try {
     myId = await getMyProfileId();
     if (myId === null) {
-      setStatus(pageStatus, "No profile found for this account. Create a new account first.", true);
+      setStatus(pageStatus, "We could not find your profile. Please sign out and create a new account.", true);
       return;
     }
     renderNav("swipe", myId);
@@ -206,7 +206,7 @@ async function init() {
     try { await resetSkips(myId); load(); }
     catch (err) { setStatus(pageStatus, "Could not reset: " + err.message, true); }
   });
-  
+
   const helpDialog = el("helpDialog");
   el("helpBtn").addEventListener("click", () => helpDialog.showModal());
   el("helpClose").addEventListener("click", () => helpDialog.close());
