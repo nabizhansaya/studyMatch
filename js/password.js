@@ -1,4 +1,3 @@
-// Password rules and the strength meter (used on the register and reset pages).
 const COMMON_PASSWORDS = new Set([
   "password", "password1", "password123", "qwerty", "qwerty123", "qwertyuiop", "12345678", "123456789",
   "1234567890", "11111111", "iloveyou", "admin123", "letmein1", "welcome1", "abc12345", "passw0rd",
@@ -27,7 +26,6 @@ function checkPassword(pw, email) {
   else if (done >= 5) level = "fair";
   return { rules, ok, level, percent: Math.round((done / rules.length) * 100) };
 }
-
 
 function attachPasswordMeter(input, list, bar, label, getEmail) {
   const TEXT = { weak: "Weak", fair: "Fair", good: "Good", strong: "Strong" };
