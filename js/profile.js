@@ -7,14 +7,23 @@ const yearSelect     = document.getElementById("studyYear");
 const locationSelect = document.getElementById("location");
 const bioInput       = document.getElementById("bio");
 const telegramInput  = document.getElementById("telegram");
-const subjectsForm   = document.getElementById("subjectsForm");
 const subjectChecks  = document.getElementById("subjectChecks");
-const subjectsStatus = document.getElementById("subjectsStatus");
+const saveBtn        = document.getElementById("saveBtn");
+const dirtyNote      = document.getElementById("dirtyNote");
 
 const TELEGRAM_RULE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
 
 let myId = null;
-let savedSubjectIds = new Set(); 
+let dirty = false;
+function setDirty(on) {
+  dirty = on;
+  dirtyNote.textContent = on ? "You have unsaved changes." : "";
+}
+profileForm.addEventListener("input", () => setDirty(true));
+profileForm.addEventListener("change", () => setDirty(true));
+window.addEventListener("beforeunload", event => {
+  if (dirty) { event.preventDefault(); event.returnValue = ""; }
+});
 
 
 async function loadProfile() {
@@ -38,6 +47,8 @@ async function loadProfile() {
   locationSelect.value = profile.location_id ?? "";
   bioInput.value       = profile.bio || "";
   telegramInput.value  = contact ? contact.telegram_username : "";
+  syncSearchable(facultySelect);
+  syncSearchable(locationSelect);
 
   if (!profile.faculty_id || !profile.study_year) {
     setStatus(pageStatus, "Please complete your profile so other students can find you.", true);
@@ -51,103 +62,57 @@ async function loadSubjects() {
   ]);
   if (error) throw error;
 
-  savedSubjectIds = new Set(mine.map(r => r.subject_id));
+  const saved = new Set(mine.map(r => r.subject_id));
   subjectChecks.innerHTML = "";
   for (const s of subjects) {
     const label = document.createElement("label");
     const box = document.createElement("input");
     box.type = "checkbox";
     box.value = s.subject_id;
-    box.checked = savedSubjectIds.has(s.subject_id);
+    box.checked = saved.has(s.subject_id);
     label.append(box, document.createTextNode(`${s.name} (${s.code})`));
     subjectChecks.appendChild(label);
   }
 }
 
 
-profileForm.addEventListener("submit", async (event) => {
+profileForm.addEventListener("submit", async event => {
   event.preventDefault();
-  const button = profileForm.querySelector("button");
 
 
   const telegram = telegramInput.value.trim().replace(/^@/, "");
   if (telegram && !TELEGRAM_RULE.test(telegram)) {
     setStatus(profileStatus,
       "Telegram username: 5-32 characters, start with a letter, only letters, digits and _.", true);
+    telegramInput.focus();
     return;
   }
 
-  button.disabled = true;
+  saveBtn.disabled = true;
   setStatus(profileStatus, "Saving...");
 
-  const { data: updatedRows, error: updateError } = await db.from("profiles").update({
-    full_name: fullNameInput.value.trim(),
-    faculty_id: facultySelect.value || null,
-    study_year: yearSelect.value || null,
-    location_id: locationSelect.value || null,
-    bio: bioInput.value.trim() || null
-  }).eq("profile_id", myId).select("profile_id");
 
+  const subjects = [...subjectChecks.querySelectorAll("input:checked")].map(box => Number(box.value));
+  const { error } = await db.rpc("save_profile", {
+    p_full_name: fullNameInput.value.trim(),
+    p_faculty: facultySelect.value ? Number(facultySelect.value) : null,
+    p_year: yearSelect.value ? Number(yearSelect.value) : null,
+    p_location: locationSelect.value ? Number(locationSelect.value) : null,
+    p_bio: bioInput.value.trim() || null,
+    p_telegram: telegram || null,
+    p_subjects: subjects
+  });
 
-  const error = updateError ||
-    ((updatedRows || []).length === 0
-      ? new Error("No profile row was updated. Sign out and sign in again, or contact the team.")
-      : null);
-
-  let contactError = null;
-  if (!error) {
-    if (telegram) {
-      ({ error: contactError } = await db.from("profile_contacts")
-        .upsert({ profile_id: myId, telegram_username: telegram }, { onConflict: "profile_id" })
-        .select("profile_id"));
-    } else {
-      ({ error: contactError } = await db.from("profile_contacts").delete().eq("profile_id", myId));
-    }
-  }
-
-  button.disabled = false;
-  const failed = error || contactError;
-  if (failed) {
-    setStatus(profileStatus, "Could not save: " + failed.message, true);
+  saveBtn.disabled = false;
+  if (error) {
+    setStatus(profileStatus, "Could not save: " + error.message, true);
     return;
   }
   telegramInput.value = telegram;
+  setDirty(false);
   setStatus(profileStatus, "Profile saved.");
   setStatus(pageStatus, "");
 });
-
-
-subjectsForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const button = subjectsForm.querySelector("button");
-  button.disabled = true;
-  setStatus(subjectsStatus, "Saving...");
-
-  const chosen = new Set(
-    [...subjectChecks.querySelectorAll("input:checked")].map(box => Number(box.value))
-  );
-  const toAdd    = [...chosen].filter(id => !savedSubjectIds.has(id))
-                     .map(id => ({ profile_id: myId, subject_id: id }));
-  const toRemove = [...savedSubjectIds].filter(id => !chosen.has(id));
-
-  let failed = null;
-  if (toAdd.length) {
-    ({ error: failed } = await db.from("profile_subjects").insert(toAdd));
-  }
-  if (!failed && toRemove.length) {
-    ({ error: failed } = await db.from("profile_subjects")
-      .delete().eq("profile_id", myId).in("subject_id", toRemove));
-  }
-
-  button.disabled = false;
-  if (failed) {
-    setStatus(subjectsStatus, "Could not save: " + failed.message, true);
-    return;
-  }
-  savedSubjectIds = chosen;
-  setStatus(subjectsStatus, `Saved (${chosen.size} subject(s)).`);
-});
-
 
 
 function setupDeleteAccount() {
@@ -168,7 +133,7 @@ function setupDeleteAccount() {
   document.getElementById("deleteCancel1").addEventListener("click", () => dialog.close());
   document.getElementById("deleteCancel2").addEventListener("click", () => dialog.close());
 
-
+  
   document.getElementById("sendCodeBtn").addEventListener("click", async () => {
     setStatus(status, "Sending the code...");
     const { data } = await db.auth.getUser();
@@ -202,9 +167,25 @@ function setupDeleteAccount() {
 }
 
 
+function setupSoundSetting() {
+  const soundToggle = document.getElementById("soundToggle");
+  const soundStatus = document.getElementById("soundStatus");
+  soundToggle.checked = soundEnabled();
+  soundToggle.addEventListener("change", () => {
+    setSoundEnabled(soundToggle.checked);
+    setStatus(soundStatus, soundToggle.checked ? "Sound is on." : "Sound is off.");
+  });
+  document.getElementById("soundTest").addEventListener("click", () => {
+    showToast("Test: this is how a notification looks.");
+    if (soundEnabled()) playChime();
+    setStatus(soundStatus, soundEnabled() ? "Message shown and sound played." : "Message shown (sound is off).");
+  });
+}
+
+
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(pageStatus, "Open js/config.js and paste your Supabase URL and public key.", true);
+    setStatus(pageStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   const session = await requireLogin();
@@ -213,24 +194,12 @@ async function init() {
   try {
     myId = await getMyProfileId();
     if (myId === null) {
-      setStatus(pageStatus, "No profile found for this account. Run migration_v2.sql, then create a new account.", true);
+      setStatus(pageStatus, "We could not find your profile. Please sign out and create a new account.", true);
       return;
     }
     renderNav("profile", myId);
     setupDeleteAccount();
-
-    const soundToggle = document.getElementById("soundToggle");
-    const soundStatus = document.getElementById("soundStatus");
-    soundToggle.checked = soundEnabled();
-    soundToggle.addEventListener("change", () => {
-      setSoundEnabled(soundToggle.checked);
-      setStatus(soundStatus, soundToggle.checked ? "Sound is on." : "Sound is off.");
-    });
-    document.getElementById("soundTest").addEventListener("click", () => {
-      showToast("Test: this is how a notification looks.");
-      if (soundEnabled()) playChime();    
-      setStatus(soundStatus, soundEnabled() ? "Message shown and sound played." : "Message shown (sound is off).");
-    });
+    setupSoundSetting();
     await Promise.all([loadProfile(), loadSubjects()]);
   } catch (err) {
     setStatus(pageStatus, "Could not load your profile: " + err.message, true);
