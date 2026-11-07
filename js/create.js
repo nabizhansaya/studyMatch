@@ -6,7 +6,7 @@ const cDuration  = document.getElementById("cDuration");
 const cLocation  = document.getElementById("cLocation");
 const cMessage   = document.getElementById("cMessage");
 
-function toLocalInput(d) { 
+function toLocalInput(d) {
   const p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
@@ -53,7 +53,7 @@ createForm.addEventListener("submit", async event => {
 
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(cStatus, "Open js/supabase-client.js and paste your Supabase URL and public key.", true);
+    setStatus(cStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
   if (!(await requireLogin())) return;
@@ -61,7 +61,7 @@ async function init() {
   try {
     const myId = await getMyProfileId();
     if (myId === null) {
-      setStatus(cStatus, "No profile found for this account. Create a new account first.", true);
+      setStatus(cStatus, "We could not find your profile. Please sign out and create a new account.", true);
       return;
     }
     renderNav("create", myId);
@@ -76,8 +76,7 @@ async function init() {
 
     fillSelect(cSubject, subjects.data, "subject_id", s => `${s.name} (${s.code})`);
     fillSelect(cLocation, locations.data, "location_id", l => l.name, "Choose...");
-    if (me.data && me.data.location_id) cLocation.value = me.data.location_id;   // your usual place
-    setDefaultTime();
+    if (me.data && me.data.location_id) { cLocation.value = me.data.location_id; syncSearchable(cLocation); }
   } catch (err) {
     setStatus(cStatus, "Could not load the page: " + err.message, true);
   }
