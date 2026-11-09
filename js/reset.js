@@ -41,7 +41,7 @@ async function init() {
     setStatus(resetNote, "The service is not available right now. Please try again later.", true);
     return;
   }
-  
+
   const { data } = await db.auth.getSession();
   if (!data.session) {
     setStatus(resetNote, "This link is not valid or has expired. Please ask for a new one on the Forgot password page.", true);
