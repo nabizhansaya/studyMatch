@@ -1,163 +1,386 @@
-const pageStatus = el("pageStatus");
-const list       = el("list");
-const matchSelect = el("matchRequest");
-
-let myId = null;
-let items = [];
-let myOpenRequests = [];
-let subjectFilter = null;
-
-async function load() {
-  setStatus(pageStatus, "Searching...");
-  try {
-    items = await fetchRequests();
-  } catch (err) {
-    setStatus(pageStatus, "Could not load requests: " + err.message, true);
-    return;
-  }
-  render();
-  setStatus(pageStatus, `${items.length} request(s) found.`);
+function setStatus(el, text, isError = false) {
+  el.textContent = text;
+  el.className = "status " + (isError ? "error" : "ok");
 }
 
-function render() {
-  list.innerHTML = "";
-  if (items.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "No requests match these filters.";
-    list.appendChild(li);
-    return;
+
+function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
+  select.innerHTML = "";
+  if (emptyLabel) {
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = emptyLabel;
+    select.appendChild(empty);
   }
-  for (const r of items) {
-    const text = requestLines(r);
-    const li = document.createElement("li");
+  for (const row of rows) {
+    const option = document.createElement("option");
+    option.value = row[valueKey];
+    option.textContent = labelFn(row);
+    select.appendChild(option);
+  }
+  if (select.hasAttribute("data-searchable")) buildSearchable(select);
+}
 
-    const subject = document.createElement("strong");
-    subject.textContent = `${r.subject_name} (${r.subject_code})`;
-    const when = document.createElement("div");
-    when.className = "req-when";
-    when.textContent = text.when;
-    const place = document.createElement("div");
-    place.textContent = text.place;
-    const who = document.createElement("div");
-    who.className = "hint";
-    who.textContent = "From " + text.who + (r.in_my_subjects ? " - on your profile" : "");
-    const message = document.createElement("div");
-    message.textContent = r.message ? `"${r.message}"` : "";
 
+function matchOption(select, text) {
+  const t = text.trim().toLowerCase();
+  return [...select.options].find(o => o.value !== "" && o.textContent.trim().toLowerCase() === t);
+}
+
+
+function syncSearchable(select) {
+  const input = select._combo;
+  if (!input) return;
+  const option = select.selectedOptions[0];
+  input.value = option && option.value !== "" ? option.textContent : "";
+  input.setCustomValidity("");
+}
+
+function buildSearchable(select) {
+  if (!select._combo) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.id = select.id + "-search";
+    input.className = "combo";
+    input.autocomplete = "off";
+    input.setAttribute("list", select.id + "-list");
+    const list = document.createElement("datalist");
+    list.id = select.id + "-list";
+    if (select.required) { input.required = true; select.required = false; }
+
+    input.addEventListener("input", () => {
+      const text = input.value.trim();
+      if (text === "") {
+        select.value = "";
+        input.setCustomValidity("");
+        select.dispatchEvent(new Event("change"));
+        return;
+      }
+      const hit = matchOption(select, text);
+      if (hit) {
+        select.value = hit.value;
+        input.setCustomValidity("");
+        select.dispatchEvent(new Event("change"));
+      } else {
+        input.setCustomValidity("Choose one of the options from the list.");
+      }
+    });
+    
+    input.addEventListener("blur", () => syncSearchable(select));
+
+    select.after(input, list);
+    select.hidden = true;
+    select.tabIndex = -1;
+    select._combo = input;
+    select._list = list;
+    const label = document.querySelector('label[for="' + select.id + '"]');
+    if (label) label.setAttribute("for", input.id);
+  }
+
+  select._list.innerHTML = "";
+  for (const option of select.options) {
+    if (option.value === "") continue;
+    const entry = document.createElement("option");
+    entry.value = option.textContent;
+    select._list.appendChild(entry);
+  }
+  const first = select.options[0];
+  select._combo.placeholder = first && first.value === "" ? first.textContent + " (type to search)" : "Type to search";
+  syncSearchable(select);
+}
+
+
+const IDLE_MINUTES = 60;
+const ACTIVE_KEY = "studymatch.lastActive";
+
+function markActive() {
+  try { localStorage.setItem(ACTIVE_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+}
+
+function idleExpired() {
+  try {
+    const last = Number(localStorage.getItem(ACTIVE_KEY));
+    return last > 0 && Date.now() - last > IDLE_MINUTES * 60000;
+  } catch (e) { return false; }
+}
+
+
+function startIdleTimer() {
+  markActive();
+  let lastMark = 0;
+  const onActivity = () => {
+    const now = Date.now();
+    if (now - lastMark > 30000) { lastMark = now; markActive(); }
+  };
+  for (const name of ["click", "keydown", "touchstart", "scroll", "pointermove"]) {
+    window.addEventListener(name, onActivity, { passive: true });
+  }
+  setInterval(() => { if (idleExpired()) signOut("timeout"); }, 60000);
+}
+
+
+function clearStoredSessions() {
+  for (const store of [window.localStorage, window.sessionStorage]) {
+    try {
+      for (const key of Object.keys(store)) {
+        if (key.startsWith("sb-") && key.endsWith("-auth-token")) store.removeItem(key);
+      }
+    } catch (e) { /* ignore */ }
+  }
+}
+
+
+async function requireLogin() {
+  const { data } = await db.auth.getSession();
+  if (!data.session) {
+    location.href = "login.html";
+    return null;
+  }
+  if (!keepSignedIn()) {
+    if (idleExpired()) {
+      await signOut("timeout");
+      return null;
+    }
+    startIdleTimer();
+  }
+  return data.session;
+}
+
+
+async function getMyProfileId() {
+  const { data, error } = await db.rpc("current_profile_id");
+  if (error) throw error;
+  return data;
+}
+
+async function signOut(reason) {
+  try { await db.auth.signOut({ scope: "local" }); } catch (e) { /* ignore */ }
+  clearStoredSessions();
+  location.href = "login.html" + (reason ? "?notice=" + reason : "");
+}
+
+
+const ASSET_BASE = "assets/";
+
+
+function formatWhen(iso) {
+  return new Date(iso).toLocaleString([], {
+    weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+  });
+}
+
+function formatDuration(min) {
+  if (min < 60) return `${min} min`;
+  return min % 60 === 0 ? `${min / 60} h` : `${(min / 60).toFixed(1)} h`;
+}
+
+
+function telegramAnchor(username) {
+  if (!/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username || "")) return null;
+  const a = document.createElement("a");
+  a.href = "https://t.me/" + username;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.textContent = "@" + username;
+  return a;
+}
+
+
+const NAV_ITEMS = [
+  { id: "swipe",   href: "swipe.html",   icon: "\u21C4", label: "Swipe" },
+  { id: "browse",  href: "browse.html",  icon: "\u2630", label: "Browse" },
+  { id: "create",  href: "create.html",  icon: "+",       label: "Create" },
+  { id: "matches", href: "matches.html", icon: "\u2714", label: "Sessions" },
+  { id: "profile", href: "profile.html", icon: "\u25CF", label: "Profile" }
+];
+
+
+function svgIcon(name) {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "icon-svg");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  const use = document.createElementNS(NS, "use");
+  use.setAttribute("href", ASSET_BASE + "icons.svg#" + name);
+  svg.appendChild(use);
+  return svg;
+}
+
+
+const NOTE_TEXT = {
+  new_request: "A new request is available.",
+  request_accepted: "Someone accepted your request. Open Sessions to confirm them.",
+  request_confirmed: "Your request was confirmed. Open Sessions for the Telegram link.",
+  request_declined: "An owner declined your request.",
+  request_not_chosen: "The owner chose another student for a request you accepted.",
+  session_cancelled: "A session or request was cancelled. Open Sessions for details.",
+  session_reminder_24h: "Reminder: you have a study session within 24 hours.",
+  session_reminder_1h: "Reminder: your study session starts within an hour."
+};
+
+
+const SOUND_KEY = "studymatch.sound";
+function soundEnabled() {
+  try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch (e) { return true; }
+}
+function setSoundEnabled(on) {
+  try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch (e) { /* ignore */ }
+}
+function playChime() {
+  new Audio(ASSET_BASE + "notify.mp3").play().catch(() => { /* blocked by the browser: ignore */ });
+}
+
+let toastBox = null;
+let toastTimer = null;
+function showToast(text) {
+  if (!toastBox) return;
+  toastBox.textContent = "";
+  const message = document.createElement("span");
+  message.textContent = text;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.textContent = "Close";
+  close.addEventListener("click", () => { toastBox.hidden = true; });
+  toastBox.append(message, close);
+  toastBox.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastBox.hidden = true; }, 10000);
+}
+
+
+async function openNotifications() {
+  let dlg = document.getElementById("notesDialog");
+  if (!dlg) {
+    dlg = document.createElement("dialog");
+    dlg.id = "notesDialog";
+    dlg.setAttribute("aria-labelledby", "notesTitle");
+    const title = document.createElement("h2");
+    title.id = "notesTitle";
+    title.textContent = "Notifications";
+    const ul = document.createElement("ul");
+    ul.id = "notesList";
+    ul.className = "people";
     const actions = document.createElement("div");
     actions.className = "actions";
-    const accept = document.createElement("button");
-    accept.type = "button";
-    accept.textContent = "Accept";
-    accept.setAttribute("aria-label", `Accept ${r.owner_name}'s request for ${r.subject_name}`);
-    accept.addEventListener("click", () => doAccept(r, accept));
-    const skip = document.createElement("button");
-    skip.type = "button";
-    skip.className = "secondary";
-    skip.textContent = "Skip";
-    skip.setAttribute("aria-label", `Skip ${r.owner_name}'s request`);
-    skip.addEventListener("click", () => doSkip(r, skip));
-    actions.append(accept, skip);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "secondary";
+    close.textContent = "Close";
+    close.addEventListener("click", () => dlg.close());
+    const sessions = document.createElement("a");
+    sessions.href = "matches.html";
+    sessions.className = "button-link";
+    sessions.textContent = "Open Sessions";
+    actions.append(close, sessions);
+    dlg.append(title, ul, actions);
+    document.body.appendChild(dlg);
+  }
+  const list = dlg.querySelector("#notesList");
+  list.textContent = "Loading...";
+  dlg.showModal();
 
-    li.append(subject, when, place, who, message, actions);
+  const { data, error } = await db.from("notifications")
+    .select("notification_id, type, is_read, created_at")
+    .order("created_at", { ascending: false }).limit(20);
+  list.textContent = "";
+  if (error) {
+    list.textContent = "Could not load notifications: " + error.message;
+    return;
+  }
+  if (data.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No notifications yet.";
     list.appendChild(li);
   }
+  for (const n of data) {
+    const li = document.createElement("li");
+    const text = document.createElement("div");
+    text.textContent = (NOTE_TEXT[n.type] || "Notification") + (n.is_read ? "" : " (new)");
+    const when = document.createElement("div");
+    when.className = "hint";
+    when.textContent = formatWhen(n.created_at);
+    li.append(text, when);
+    list.appendChild(li);
+  }
+
+
+  await db.from("notifications").update({ is_read: true }).eq("is_read", false);
+  if (window.refreshNavBadge) window.refreshNavBadge();
 }
 
+function renderNav(active, myId) {
+  toastBox = document.createElement("div");
+  toastBox.className = "toast";
+  toastBox.setAttribute("role", "status");
+  toastBox.setAttribute("aria-live", "polite");
+  toastBox.hidden = true;
+  document.body.appendChild(toastBox);
 
-async function doAccept(r, button) {
-  button.disabled = true;
-  try {
-    await acceptRequest(r.request_id);
-    items = items.filter(x => x.request_id !== r.request_id);
-    render();
-    setStatus(pageStatus, `Accepted ${r.owner_name}'s request.`);
-    await showMatch(r);
-  } catch (err) {
-    await load();
-    setStatus(pageStatus, err.message, true);
+
+  const actions = document.createElement("div");
+  actions.className = "header-actions";
+
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.hidden = true;
+  badge.setAttribute("aria-hidden", "true");
+  const bell = document.createElement("button");
+  bell.type = "button";
+  bell.className = "icon-btn";
+  bell.setAttribute("aria-label", "Notifications");
+  bell.title = "Notifications";
+  bell.append(svgIcon("i-bell"), badge);
+  bell.addEventListener("click", openNotifications);
+
+  const signOutButton = document.createElement("button");
+  signOutButton.type = "button";
+  signOutButton.className = "signout";
+  signOutButton.textContent = "Sign out";
+  signOutButton.addEventListener("click", () => signOut());
+
+  actions.append(bell, createThemeButton(), signOutButton);
+  document.querySelector("header").appendChild(actions);
+
+  const nav = document.createElement("nav");
+  nav.className = "tabbar";
+  nav.setAttribute("aria-label", "Main");
+
+  for (const item of NAV_ITEMS) {
+    const link = document.createElement("a");
+    link.href = item.href;
+    if (item.id === active) link.setAttribute("aria-current", "page");
+    const icon = svgIcon("i-" + item.id);
+    const label = document.createElement("span");
+    label.textContent = item.label;
+    link.append(icon, label);
+    nav.appendChild(link);
+  }
+  document.body.appendChild(nav);
+  document.body.classList.add("has-tabbar");
+
+ 
+  async function refreshBadge() {
+    const { count } = await db.from("notifications")
+      .select("notification_id", { count: "exact", head: true }).eq("is_read", false);
+    badge.hidden = !count;
+    badge.textContent = count || "";
+    bell.setAttribute("aria-label", count ? `Notifications, ${count} new` : "Notifications");
+  }
+  window.refreshNavBadge = refreshBadge;
+  refreshBadge();
+  if (myId) {
+    db.channel("notes-" + myId)
+      .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications", filter: `profile_id=eq.${myId}` },
+          payload => {
+            refreshBadge();
+            const text = payload.new && NOTE_TEXT[payload.new.type];
+            if (text) {
+              showToast(text);
+              if (soundEnabled()) playChime();
+            }
+          })
+      .subscribe();
   }
 }
-
-async function doSkip(r, button) {
-  button.disabled = true;
-  try {
-    await skipRequest(r.request_id, myId);
-    items = items.filter(x => x.request_id !== r.request_id);
-    render();
-    setStatus(pageStatus, "Skipped.");
-  } catch (err) {
-    button.disabled = false;
-    setStatus(pageStatus, "Could not skip: " + err.message, true);
-  }
-}
-
-
-async function loadMyRequests() {
-  const { data, error } = await db.from("study_requests")
-    .select("request_id, subject_id, location_id, proposed_start, subjects(name)")
-    .eq("sender_id", myId).eq("status", "open").order("proposed_start");
-  if (error) throw error;
-  myOpenRequests = data;
-
-  matchSelect.innerHTML = "";
-  const none = document.createElement("option");
-  none.value = "";
-  none.textContent = data.length ? "No - use my own filters" : "You have no open requests";
-  matchSelect.appendChild(none);
-  for (const r of data) {
-    const option = document.createElement("option");
-    option.value = r.request_id;
-    option.textContent = `${r.subjects.name} - ${formatWhen(r.proposed_start)}`;
-    matchSelect.appendChild(option);
-  }
-}
-
-matchSelect.addEventListener("change", () => {
-  const mine = myOpenRequests.find(r => String(r.request_id) === matchSelect.value);
-  if (mine) {
-    if (subjectFilter) subjectFilter.showAll(true);
-    el("fSubject").value = mine.subject_id;
-    el("fLocation").value = mine.location_id;
-    syncSearchable(el("fSubject"));
-    syncSearchable(el("fLocation"));
-  }
-  load();
-});
-
-
-async function init() {
-  if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
-    setStatus(pageStatus, "The service is not available right now. Please try again later.", true);
-    return;
-  }
-  if (!(await requireLogin())) return;
-
-  try {
-    myId = await getMyProfileId();
-    if (myId === null) {
-      setStatus(pageStatus, "We could not find your profile. Please sign out and create a new account.", true);
-      return;
-    }
-    renderNav("browse", myId);
-    fillFilters(await loadOptions());
-    const me = await getMyAcademic(myId);
-    subjectFilter = await setupSubjectFilters({ subjectSelect: el("fSubject"), emptyLabel: "Any subject",
-                                                myMajor: me.major_id, myYear: me.study_year, onChange: load });
-    await loadMyRequests();
-  } catch (err) {
-    setStatus(pageStatus, "Could not load the page: " + err.message, true);
-    return;
-  }
-
-  for (const id of ["fSubject", "fLocation", "fFormat", "fDate", "fMine"]) el(id).addEventListener("change", load);
-  el("searchBtn").addEventListener("click", load);
-  el("resetSkipsBtn").addEventListener("click", async () => {
-    try { await resetSkips(myId); load(); }
-    catch (err) { setStatus(pageStatus, "Could not reset: " + err.message, true); }
-  });
-
-  load();
-}
-
-init();
