@@ -27,6 +27,7 @@ function checkPassword(pw, email) {
   return { rules, ok, level, percent: Math.round((done / rules.length) * 100) };
 }
 
+
 function attachPasswordMeter(input, list, bar, label, getEmail) {
   const TEXT = { weak: "Weak", fair: "Fair", good: "Good", strong: "Strong" };
   function update() {
