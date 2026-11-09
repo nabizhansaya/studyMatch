@@ -196,6 +196,9 @@ async function init() {
     }
     renderNav("swipe", myId);
     fillFilters(await loadOptions());
+    const me = await getMyAcademic(myId);
+    await setupSubjectFilters({ subjectSelect: el("fSubject"), emptyLabel: "Any subject",
+                                myMajor: me.major_id, myYear: me.study_year, onChange: load });
   } catch (err) {
     setStatus(pageStatus, "Could not load the page: " + err.message, true);
     return;
@@ -215,7 +218,7 @@ async function init() {
       localStorage.setItem("studymatch.helpSeen", "yes");
       helpDialog.showModal();
     }
-  } catch (e) { /* storage blocked: skip the first-visit help */ }
+  } catch (e) { /* storage blocked*/ }
 
   skipBtn.addEventListener("click", () => doSkip(deck[0]));
   undoBtn.addEventListener("click", doUndo);
