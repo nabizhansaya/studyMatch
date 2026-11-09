@@ -25,8 +25,8 @@
 
         <div class="row">
           <div>
-            <label for="faculty">Faculty</label>
-            <select id="faculty" data-searchable></select>
+            <label for="major">Major</label>
+            <select id="major" data-searchable></select>
           </div>
           <div>
             <label for="studyYear">Year of study</label>
@@ -52,10 +52,42 @@
 
     <section class="card" aria-labelledby="subjects-title">
       <h2 id="subjects-title">Subjects I want to study</h2>
+      <p class="hint">Tick the subjects you need a study partner for. Ticked subjects stay ticked even when the filter hides them.</p>
+      <fieldset class="subject-filter" data-nodirty>
+        <legend>Show subjects for</legend>
+        <div class="row">
+          <div>
+            <label for="sfMajor">Major</label>
+            <select id="sfMajor" data-searchable></select>
+          </div>
+          <div>
+            <label for="sfYear">Year</label>
+            <select id="sfYear">
+              <option value="">Any year</option>
+              <option>1</option><option>2</option><option>3</option>
+              <option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+          <div>
+            <label for="sfTerm">Trimester</label>
+            <select id="sfTerm">
+              <option value="">Any trimester</option>
+              <option>1</option><option>2</option><option>3</option>
+            </select>
+          </div>
+        </div>
+        <label for="sfText">Search the list</label>
+        <input id="sfText" type="search" placeholder="Name or code">
+        <div class="actions">
+          <button id="sfMine" type="button" class="secondary">My major and year</button>
+          <button id="sfAll" type="button" class="secondary">Show all subjects</button>
+        </div>
+        <p id="sfHint" class="hint" aria-live="polite"></p>
+      </fieldset>
       <fieldset>
-          <legend class="hint">Tick every subject you need a study partner for</legend>
-          <div id="subjectChecks" class="checks"></div>
-        </fieldset>
+        <legend class="hint">Subjects</legend>
+        <div id="subjectChecks" class="checks"></div>
+      </fieldset>
     </section>
 
       <div class="savebar">
@@ -102,6 +134,7 @@
   <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/subject-filter.js"></script>
   <script src="js/profile.js"></script>
 </body>
 </html>
