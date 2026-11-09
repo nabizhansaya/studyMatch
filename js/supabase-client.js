@@ -2,7 +2,6 @@ if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
   console.error("StudyMatch setup: open js/config.js and paste your Supabase URL and public key.");
 }
 
-
 const KEEP_KEY = "studymatch.keepSignedIn";
 
 function keepSignedIn() {
