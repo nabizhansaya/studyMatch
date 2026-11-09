@@ -35,6 +35,7 @@ function setupTabs() {
     if (e.key === "ArrowLeft") next = (current + TAB_IDS.length - 1) % TAB_IDS.length;
     if (next >= 0) { showTab(TAB_IDS[next]); document.getElementById("tab-" + TAB_IDS[next]).focus(); }
   });
+
   const fromHash = () => {
     const id = location.hash.slice(1);
     showTab(TAB_IDS.includes(id) ? id : "confirmed");
@@ -198,7 +199,7 @@ async function render() {
   }
   sessions.sort((x, y) => new Date(x.start) - new Date(y.start));
 
- 
+
   const contacts = new Map();
   const ids = [...new Set(sessions.map(s => s.partnerId))];
   if (ids.length) {
