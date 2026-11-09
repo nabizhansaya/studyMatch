@@ -17,6 +17,36 @@
   <main class="swipe-main">
     <details class="filters">
       <summary>Filters</summary>
+      <fieldset class="subject-filter" data-nodirty>
+        <legend>Show subjects for</legend>
+        <div class="row">
+          <div>
+            <label for="sfMajor">Major</label>
+            <select id="sfMajor" data-searchable></select>
+          </div>
+          <div>
+            <label for="sfYear">Year</label>
+            <select id="sfYear">
+              <option value="">Any year</option>
+              <option>1</option><option>2</option><option>3</option>
+              <option>4</option><option>5</option><option>6</option>
+            </select>
+          </div>
+          <div>
+            <label for="sfTerm">Trimester</label>
+            <select id="sfTerm">
+              <option value="">Any trimester</option>
+              <option>1</option><option>2</option><option>3</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="sfMine" type="button" class="secondary">My major and year</button>
+          <button id="sfAll" type="button" class="secondary">Show all subjects</button>
+        </div>
+        <p id="sfHint" class="hint" aria-live="polite"></p>
+      </fieldset>
+
       <label for="fSubject">Subject (course)</label>
       <select id="fSubject" data-searchable></select>
       <label for="fLocation">Place</label>
@@ -67,6 +97,7 @@
   <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/subject-filter.js"></script>
   <script src="js/requests-common.js"></script>
   <script src="js/swipe.js"></script>
 </body>
