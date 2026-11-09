@@ -2,7 +2,7 @@ document.querySelector("header").appendChild(createThemeButton());
 
 const signupForm = document.getElementById("signupForm");
 const suStatus   = document.getElementById("suStatus");
-const suFaculty  = document.getElementById("suFaculty");
+const suMajor    = document.getElementById("suMajor");
 const suEmail    = document.getElementById("suEmail");
 const suPassword = document.getElementById("suPassword");
 const suPassword2 = document.getElementById("suPassword2");
@@ -13,6 +13,7 @@ wireShowPassword(document.getElementById("showPw"), [suPassword, suPassword2]);
 
 signupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+
 
   if (!checkPassword(suPassword.value, suEmail.value).ok) {
     setStatus(suStatus, "The password does not meet all the rules yet.", true);
@@ -35,7 +36,7 @@ signupForm.addEventListener("submit", async (event) => {
     options: {
       data: {
         full_name: document.getElementById("suName").value.trim(),
-        faculty_id: suFaculty.value,
+        major_id: suMajor.value,
         study_year: document.getElementById("suYear").value
       },
       emailRedirectTo: new URL("login.html", location.href).href
@@ -44,6 +45,7 @@ signupForm.addEventListener("submit", async (event) => {
 
   button.disabled = false;
   if (error) {
+
     setStatus(suStatus, error.message, true);
     return;
   }
@@ -60,12 +62,12 @@ async function init() {
     setStatus(suStatus, "The service is not available right now. Please try again later.", true);
     return;
   }
-  const { data, error } = await db.from("faculties").select("faculty_id, name").order("name");
+  const { data, error } = await db.from("majors").select("major_id, name").order("name");
   if (error) {
-    setStatus(suStatus, "Could not load faculties: " + error.message, true);
+    setStatus(suStatus, "Could not load the list of majors: " + error.message, true);
     return;
   }
-  fillSelect(suFaculty, data, "faculty_id", f => f.name, "Choose...");
+  fillSelect(suMajor, data, "major_id", m => m.name, "Choose...");
 }
 
 init();
