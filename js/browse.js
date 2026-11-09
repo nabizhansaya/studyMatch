@@ -5,6 +5,7 @@ const matchSelect = el("matchRequest");
 let myId = null;
 let items = [];
 let myOpenRequests = [];
+let subjectFilter = null;
 
 
 async function load() {
@@ -116,6 +117,7 @@ async function loadMyRequests() {
 matchSelect.addEventListener("change", () => {
   const mine = myOpenRequests.find(r => String(r.request_id) === matchSelect.value);
   if (mine) {
+    if (subjectFilter) subjectFilter.showAll(true);
     el("fSubject").value = mine.subject_id;
     el("fLocation").value = mine.location_id;
     syncSearchable(el("fSubject"));
@@ -140,6 +142,9 @@ async function init() {
     }
     renderNav("browse", myId);
     fillFilters(await loadOptions());
+    const me = await getMyAcademic(myId);
+    subjectFilter = await setupSubjectFilters({ subjectSelect: el("fSubject"), emptyLabel: "Any subject",
+                                                myMajor: me.major_id, myYear: me.study_year, onChange: load });
     await loadMyRequests();
   } catch (err) {
     setStatus(pageStatus, "Could not load the page: " + err.message, true);
