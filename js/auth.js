@@ -65,7 +65,7 @@ function buildSearchable(select) {
         input.setCustomValidity("Choose one of the options from the list.");
       }
     });
-
+    
     input.addEventListener("blur", () => syncSearchable(select));
 
     select.after(input, list);
@@ -162,6 +162,7 @@ async function signOut(reason) {
 
 const ASSET_BASE = "assets/";
 
+
 function formatWhen(iso) {
   return new Date(iso).toLocaleString([], {
     weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
@@ -247,6 +248,7 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastBox.hidden = true; }, 10000);
 }
 
+
 async function openNotifications() {
   let dlg = document.getElementById("notesDialog");
   if (!dlg) {
@@ -315,7 +317,7 @@ function renderNav(active, myId) {
   toastBox.hidden = true;
   document.body.appendChild(toastBox);
 
-
+  // top bar: notifications bell, theme button, sign out
   const actions = document.createElement("div");
   actions.className = "header-actions";
 
@@ -357,7 +359,7 @@ function renderNav(active, myId) {
   document.body.appendChild(nav);
   document.body.classList.add("has-tabbar");
 
-
+  
   async function refreshBadge() {
     const { count } = await db.from("notifications")
       .select("notification_id", { count: "exact", head: true }).eq("is_read", false);
