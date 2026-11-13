@@ -32,7 +32,6 @@
               <select id="sfYear">
                 <option value="">Any year</option>
                 <option>1</option><option>2</option><option>3</option>
-                <option>4</option><option>5</option><option>6</option>
               </select>
             </div>
             <div>
@@ -58,6 +57,13 @@
 
         <div class="row">
           <div>
+            <label for="cFormat">Format</label>
+            <select id="cFormat">
+              <option value="in_person">In person</option>
+              <option value="online">Online</option>
+            </select>
+          </div>
+          <div>
             <label for="cDuration">Length</label>
             <select id="cDuration">
               <option value="30">30 minutes</option>
@@ -67,10 +73,15 @@
               <option value="180">3 hours</option>
             </select>
           </div>
-          <div>
-            <label for="cLocation">Place</label>
-            <select id="cLocation" data-searchable required></select>
-          </div>
+        </div>
+
+        <div id="placeBox">
+          <label for="cLocation">Place</label>
+          <select id="cLocation" data-searchable required></select>
+        </div>
+        <div id="detailsBox" hidden>
+          <label for="cDetails">Specify the place</label>
+          <input id="cDetails" type="text" maxlength="100" placeholder="For example: room 214, building B">
         </div>
 
         <label for="cMessage">Message (optional)</label>
