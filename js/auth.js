@@ -65,7 +65,7 @@ function buildSearchable(select) {
         input.setCustomValidity("Choose one of the options from the list.");
       }
     });
-    
+
     input.addEventListener("blur", () => syncSearchable(select));
 
     select.after(input, list);
@@ -304,7 +304,6 @@ async function openNotifications() {
     list.appendChild(li);
   }
 
-
   await db.from("notifications").update({ is_read: true }).eq("is_read", false);
   if (window.refreshNavBadge) window.refreshNavBadge();
 }
@@ -359,7 +358,7 @@ function renderNav(active, myId) {
   document.body.appendChild(nav);
   document.body.classList.add("has-tabbar");
 
- 
+
   async function refreshBadge() {
     const { count } = await db.from("notifications")
       .select("notification_id", { count: "exact", head: true }).eq("is_read", false);
