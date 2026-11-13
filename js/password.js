@@ -1,10 +1,10 @@
+
 const COMMON_PASSWORDS = new Set([
   "password", "password1", "password123", "qwerty", "qwerty123", "qwertyuiop", "12345678", "123456789",
   "1234567890", "11111111", "iloveyou", "admin123", "letmein1", "welcome1", "abc12345", "passw0rd",
   "p@ssw0rd", "p@ssword", "zaq12wsx", "1q2w3e4r", "asdfghjk", "asdf1234", "qazwsxedc", "qwerty12",
   "qwerty1234", "monkey123", "dragon123", "football1", "baseball1", "superman1", "trustno1", "changeme"
 ]);
-
 
 const SPECIAL = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
 
