@@ -129,7 +129,6 @@ stage.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") doSkip(deck[0]);
 });
 
-
 async function doAccept(r) {
   if (!r || busy) return;
   busy = true;
@@ -209,7 +208,6 @@ async function init() {
     try { await resetSkips(myId); load(); }
     catch (err) { setStatus(pageStatus, "Could not reset: " + err.message, true); }
   });
-
   const helpDialog = el("helpDialog");
   el("helpBtn").addEventListener("click", () => helpDialog.showModal());
   el("helpClose").addEventListener("click", () => helpDialog.close());
@@ -218,7 +216,7 @@ async function init() {
       localStorage.setItem("studymatch.helpSeen", "yes");
       helpDialog.showModal();
     }
-  } catch (e) { /* storage blocked*/ }
+  } catch (e) { /* storage blocked: skip the first-visit help */ }
 
   skipBtn.addEventListener("click", () => doSkip(deck[0]));
   undoBtn.addEventListener("click", doUndo);
