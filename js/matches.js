@@ -87,7 +87,7 @@ async function act(rpcName, args, doneText) {
 
 async function loadMine() {
   const { data, error } = await db.from("study_requests")
-    .select(`request_id, status, proposed_start, duration_minutes, message,
+    .select(`request_id, status, proposed_start, duration_minutes, message, location_note,
              subjects(name, code), locations(name),
              request_responses(status, responder:profiles!responder_id(profile_id, full_name, study_year, bio))`)
     .eq("sender_id", myId).in("status", ["open", "confirmed"])
@@ -99,7 +99,7 @@ async function loadMine() {
 async function loadAnswered() {
   const { data, error } = await db.from("request_responses")
     .select(`request_id, status,
-             study_requests(request_id, status, proposed_start, duration_minutes, message,
+             study_requests(request_id, status, proposed_start, duration_minutes, message, location_note,
                subjects(name, code), locations(name),
                owner:profiles!sender_id(profile_id, full_name))`)
     .eq("responder_id", myId).in("status", ["accepted", "confirmed"]);
@@ -129,7 +129,7 @@ function sessionItem(s, contacts) {
 
 function openItem(r) {
   const li = document.createElement("li");
-  headLines(li, r.subjects.name, r.subjects.code, r.proposed_start, r.duration_minutes, r.locations.name, r.message);
+  headLines(li, r.subjects.name, r.subjects.code, r.proposed_start, r.duration_minutes, placeLabel(r.locations.name, r.location_note), r.message);
 
   const interested = r.request_responses.filter(x => x.status === "accepted");
   if (interested.length === 0) {
@@ -169,7 +169,7 @@ function openItem(r) {
 function waitingItem(a) {
   const r = a.study_requests;
   const li = document.createElement("li");
-  headLines(li, r.subjects.name, r.subjects.code, r.proposed_start, r.duration_minutes, r.locations.name, r.message);
+  headLines(li, r.subjects.name, r.subjects.code, r.proposed_start, r.duration_minutes, placeLabel(r.locations.name, r.location_note), r.message);
   li.appendChild(line("", `From ${r.owner.full_name}`));
   const actions = document.createElement("div");
   actions.className = "actions";
@@ -182,19 +182,19 @@ function waitingItem(a) {
 async function render() {
   const [mine, answered] = await Promise.all([loadMine(), loadAnswered()]);
 
-  
+
   const sessions = [];
   for (const r of mine.filter(x => x.status === "confirmed")) {
     const hit = r.request_responses.find(x => x.status === "confirmed");
     if (!hit) continue;
     sessions.push({ requestId: r.request_id, subject: r.subjects.name, code: r.subjects.code,
-      start: r.proposed_start, duration: r.duration_minutes, place: r.locations.name, message: r.message,
+      start: r.proposed_start, duration: r.duration_minutes, place: placeLabel(r.locations.name, r.location_note), message: r.message,
       partnerId: hit.responder.profile_id, partnerName: hit.responder.full_name });
   }
   for (const a of answered.filter(x => x.status === "confirmed" && x.study_requests.status === "confirmed")) {
     const r = a.study_requests;
     sessions.push({ requestId: r.request_id, subject: r.subjects.name, code: r.subjects.code,
-      start: r.proposed_start, duration: r.duration_minutes, place: r.locations.name, message: r.message,
+      start: r.proposed_start, duration: r.duration_minutes, place: placeLabel(r.locations.name, r.location_note), message: r.message,
       partnerId: r.owner.profile_id, partnerName: r.owner.full_name });
   }
   sessions.sort((x, y) => new Date(x.start) - new Date(y.start));
