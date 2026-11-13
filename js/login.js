@@ -1,3 +1,4 @@
+
 document.querySelector("header").appendChild(createThemeButton());
 
 const signinForm = document.getElementById("signinForm");
@@ -17,6 +18,7 @@ signinForm.addEventListener("submit", async (event) => {
   const button = signinForm.querySelector("button");
   button.disabled = true;
   setStatus(siStatus, "Signing in...");
+
 
   const keep = siKeep.checked;
   setKeepSignedIn(keep);
