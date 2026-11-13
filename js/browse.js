@@ -65,7 +65,6 @@ function render() {
   }
 }
 
-
 async function doAccept(r, button) {
   button.disabled = true;
   try {
@@ -93,7 +92,6 @@ async function doSkip(r, button) {
   }
 }
 
-
 async function loadMyRequests() {
   const { data, error } = await db.from("study_requests")
     .select("request_id, subject_id, location_id, proposed_start, subjects(name)")
@@ -120,6 +118,8 @@ matchSelect.addEventListener("change", () => {
     if (subjectFilter) subjectFilter.showAll(true);
     el("fSubject").value = mine.subject_id;
     el("fLocation").value = mine.location_id;
+    el("fFormat").value = el("fLocation").value ? "in_person" : "online";
+    el("fFormat").dispatchEvent(new Event("change"));
     syncSearchable(el("fSubject"));
     syncSearchable(el("fLocation"));
   }
