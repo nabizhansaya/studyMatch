@@ -140,7 +140,7 @@ profileForm.addEventListener("submit", async event => {
   saveBtn.disabled = true;
   setStatus(profileStatus, "Saving...");
 
- 
+
   const subjects = [...selectedSubjects];
   const { error } = await db.rpc("save_profile", {
     p_full_name: fullNameInput.value.trim(),
@@ -182,28 +182,35 @@ function setupDeleteAccount() {
   document.getElementById("deleteCancel1").addEventListener("click", () => dialog.close());
   document.getElementById("deleteCancel2").addEventListener("click", () => dialog.close());
 
-  // 1. send a one-time code to the e-mail address of the account
-  document.getElementById("sendCodeBtn").addEventListener("click", async () => {
+
+  async function sendCode() {
     setStatus(status, "Sending the code...");
     const { data } = await db.auth.getUser();
     email = data && data.user ? data.user.email : null;
     if (!email) { setStatus(status, "Could not read your e-mail address. Sign in again.", true); return; }
 
     const { error } = await db.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-    if (error) { setStatus(status, error.message, true); return; }
+    if (error) { console.error(error); setStatus(status, error.message, true); return; }
     step1.hidden = true;
     step2.hidden = false;
-    setStatus(status, "We sent a code to " + email + ". Enter it below.");
+    setStatus(status, "We sent a code to " + email + ". Use the newest e-mail and enter the code below.");
     codeBox.focus();
-  });
+  }
+  document.getElementById("sendCodeBtn").addEventListener("click", sendCode);
+  document.getElementById("resendCodeBtn").addEventListener("click", sendCode);
+
 
   document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
-    const token = codeBox.value.trim();
+    const token = codeBox.value.replace(/\s+/g, "");
     if (!token) { setStatus(status, "Enter the code from the e-mail.", true); return; }
     setStatus(status, "Checking the code...");
 
     const { error: codeError } = await db.auth.verifyOtp({ email, token, type: "email" });
-    if (codeError) { setStatus(status, "The code is wrong or has expired.", true); return; }
+    if (codeError) {
+      console.error(codeError);
+      setStatus(status, "The code is wrong or has expired. Press Send a new code and use the code from the newest e-mail.", true);
+      return;
+    }
 
     const { error: deleteError } = await db.rpc("delete_my_account");
     if (deleteError) { setStatus(status, "Could not delete the account: " + deleteError.message, true); return; }
