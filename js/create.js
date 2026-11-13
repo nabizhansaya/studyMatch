@@ -4,9 +4,31 @@ const cSubject   = document.getElementById("cSubject");
 const cStart     = document.getElementById("cStart");
 const cDuration  = document.getElementById("cDuration");
 const cLocation  = document.getElementById("cLocation");
+const cFormat    = document.getElementById("cFormat");
+const placeBox   = document.getElementById("placeBox");
+const detailsBox = document.getElementById("detailsBox");
+const cDetails   = document.getElementById("cDetails");
+
+let locations = [];
+
+const isOnline = () => cFormat.value === "online";
+function needsDetails() {
+  const place = locations.find(l => String(l.location_id) === cLocation.value);
+  return !isOnline() && !!(place && place.needs_details);
+}
+
+
+function updatePlaceFields() {
+  placeBox.hidden = isOnline();
+  if (cLocation._combo) cLocation._combo.required = !isOnline();
+  detailsBox.hidden = !needsDetails();
+  cDetails.required = needsDetails();
+}
+cFormat.addEventListener("change", updatePlaceFields);
+cLocation.addEventListener("change", updatePlaceFields);
 const cMessage   = document.getElementById("cMessage");
 
-function toLocalInput(d) { 
+function toLocalInput(d) {
   const p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
@@ -28,6 +50,18 @@ createForm.addEventListener("submit", async event => {
     return;
   }
 
+  const online = locations.find(l => l.is_online);
+  const locationId = isOnline() ? (online && online.location_id) : Number(cLocation.value);
+  if (!locationId) {
+    setStatus(cStatus, "Choose a place.", true);
+    return;
+  }
+  if (needsDetails() && !cDetails.value.trim()) {
+    setStatus(cStatus, "Please write where you want to meet.", true);
+    cDetails.focus();
+    return;
+  }
+
   const button = createForm.querySelector("button");
   button.disabled = true;
   setStatus(cStatus, "Posting...");
@@ -36,8 +70,9 @@ createForm.addEventListener("submit", async event => {
     p_subject: Number(cSubject.value),
     p_start: start.toISOString(),
     p_duration: Number(cDuration.value),
-    p_location: Number(cLocation.value),
-    p_message: cMessage.value.trim() || null
+    p_location: locationId,
+    p_message: cMessage.value.trim() || null,
+    p_location_note: needsDetails() ? cDetails.value.trim() : null
   });
 
   button.disabled = false;
@@ -47,6 +82,7 @@ createForm.addEventListener("submit", async event => {
   }
   setStatus(cStatus, "Request posted. Other students can see it now.");
   cMessage.value = "";
+  cDetails.value = "";
   setDefaultTime();
 });
 
@@ -67,14 +103,19 @@ async function init() {
     renderNav("create", myId);
 
     const [locations, me] = await Promise.all([
-      db.from("locations").select("location_id, name").order("location_id"),
+      db.from("locations").select("location_id, name, is_online, needs_details").order("location_id"),
       db.from("profiles").select("location_id, major_id, study_year").eq("profile_id", myId).single()
     ]);
     if (locations.error) throw locations.error;
 
-    fillSelect(cLocation, locations.data, "location_id", l => l.name, "Choose...");
-    if (me.data && me.data.location_id) { cLocation.value = me.data.location_id; syncSearchable(cLocation); } 
-  
+    locations = locations.data;
+
+    fillSelect(cLocation, locations.filter(l => !l.is_online), "location_id", l => l.name, "Choose...");
+    const usual = me.data && locations.find(l => l.location_id === me.data.location_id);
+    if (usual && usual.is_online) cFormat.value = "online";
+    else if (usual) { cLocation.value = usual.location_id; syncSearchable(cLocation); }
+    updatePlaceFields();
+    
     await setupSubjectFilters({ subjectSelect: cSubject, emptyLabel: null,
                                 myMajor: me.data && me.data.major_id, myYear: me.data && me.data.study_year });
     setDefaultTime();
