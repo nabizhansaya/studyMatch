@@ -1,6 +1,7 @@
-
+// Light / dark / system theme.
+// Loaded in the <head> of every page, so the right colours show from the first moment.
 (function () {
-  var KEY = "studymatch.theme";
+  var KEY = "studymatch.theme";                 // "light", "dark", or nothing = follow the system
   var ORDER = ["system", "light", "dark"];
   var ICON = { system: "i-monitor", light: "i-sun", dark: "i-moon" };
 
@@ -26,7 +27,7 @@
 
   apply(get());
 
- 
+  // A round icon button for the top bar. Each click switches: system -> light -> dark -> system.
   window.createThemeButton = function () {
     var NS = "http://www.w3.org/2000/svg";
     var button = document.createElement("button");

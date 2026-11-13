@@ -15,7 +15,7 @@ wireShowPassword(document.getElementById("showPw"), [fgPassword, fgPassword2]);
 
 let email = "";
 
-
+// 1. send a one-time code to the e-mail address (the e-mail has a code and no link)
 async function sendCode() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
     setStatus(fgStatus, "The service is not available right now. Please try again later.", true);
@@ -25,7 +25,7 @@ async function sendCode() {
   const { error } = await db.auth.resetPasswordForEmail(email);
   if (error) {
     console.error(error);
-    setStatus(fgStatus, error.message, true);
+    setStatus(fgStatus, error.message, true);          // for example: please wait a minute before asking again
     return false;
   }
   setStatus(fgStatus, "If an account exists for " + email + ", a code is on its way. Check the spam folder too, and use the newest e-mail.");
@@ -49,7 +49,7 @@ forgotForm.addEventListener("submit", async (event) => {
 
 document.getElementById("resendBtn").addEventListener("click", sendCode);
 
-
+// 2. check the code, then save the new password
 codeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!checkPassword(fgPassword.value, email).ok) {
@@ -77,7 +77,7 @@ codeForm.addEventListener("submit", async (event) => {
   const { error } = await db.auth.updateUser({ password: fgPassword.value });
   button.disabled = false;
   if (error) {
-    setStatus(fgStatus, error.message, true); 
+    setStatus(fgStatus, error.message, true);          // for example: the new password must be different
     return;
   }
   try { await db.auth.signOut({ scope: "local" }); } catch (e) { /* ignore */ }

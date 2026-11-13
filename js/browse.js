@@ -7,7 +7,7 @@ let items = [];
 let myOpenRequests = [];
 let subjectFilter = null;
 
-
+// ---- READ: the list with all filters at once -------------------
 async function load() {
   setStatus(pageStatus, "Searching...");
   try {
@@ -65,6 +65,7 @@ function render() {
   }
 }
 
+// ---- WRITE: accept or skip -------------------------------------
 async function doAccept(r, button) {
   button.disabled = true;
   try {
@@ -74,7 +75,7 @@ async function doAccept(r, button) {
     setStatus(pageStatus, `Accepted ${r.owner_name}'s request.`);
     await showMatch(r);
   } catch (err) {
-    await load();
+    await load();                                   // e.g. someone else was faster
     setStatus(pageStatus, err.message, true);
   }
 }
@@ -92,6 +93,7 @@ async function doSkip(r, button) {
   }
 }
 
+// ---- "Match one of my requests": copy its subject and place into the filters ----
 async function loadMyRequests() {
   const { data, error } = await db.from("study_requests")
     .select("request_id, subject_id, location_id, proposed_start, subjects(name)")
@@ -115,18 +117,18 @@ async function loadMyRequests() {
 matchSelect.addEventListener("change", () => {
   const mine = myOpenRequests.find(r => String(r.request_id) === matchSelect.value);
   if (mine) {
-    if (subjectFilter) subjectFilter.showAll(true);
+    if (subjectFilter) subjectFilter.showAll(true);        // make sure the subject is in the list
     el("fSubject").value = mine.subject_id;
-    el("fLocation").value = mine.location_id;
+    el("fLocation").value = mine.location_id;                 // empty when the request is online
     el("fFormat").value = el("fLocation").value ? "in_person" : "online";
-    el("fFormat").dispatchEvent(new Event("change"));
+    el("fFormat").dispatchEvent(new Event("change"));         // the place box follows the format
     syncSearchable(el("fSubject"));
     syncSearchable(el("fLocation"));
   }
   load();
 });
 
-
+// ---- Start ---------------------------------------------------------
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
     setStatus(pageStatus, "The service is not available right now. Please try again later.", true);

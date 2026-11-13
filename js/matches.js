@@ -5,7 +5,7 @@ const waitingList = document.getElementById("waitingList");
 
 let myId = null;
 
-
+// ---- Tabs: Confirmed / My requests / I accepted ----------------------
 const TAB_IDS = ["confirmed", "open", "accepted"];
 
 function showTab(id) {
@@ -27,7 +27,7 @@ function setupTabs() {
   for (const t of TAB_IDS) {
     document.getElementById("tab-" + t).addEventListener("click", () => showTab(t));
   }
-
+  // arrow keys move between the tabs
   document.querySelector(".tabs").addEventListener("keydown", e => {
     const current = TAB_IDS.findIndex(t => document.getElementById("tab-" + t).getAttribute("aria-selected") === "true");
     let next = -1;
@@ -35,7 +35,7 @@ function setupTabs() {
     if (e.key === "ArrowLeft") next = (current + TAB_IDS.length - 1) % TAB_IDS.length;
     if (next >= 0) { showTab(TAB_IDS[next]); document.getElementById("tab-" + TAB_IDS[next]).focus(); }
   });
-
+  // links such as matches.html#open open that tab
   const fromHash = () => {
     const id = location.hash.slice(1);
     showTab(TAB_IDS.includes(id) ? id : "confirmed");
@@ -44,7 +44,7 @@ function setupTabs() {
   fromHash();
 }
 
-
+// ---- Small builders ------------------------------------------------
 function line(className, text) {
   const d = document.createElement("div");
   if (className) d.className = className;
@@ -73,7 +73,7 @@ function headLines(li, subject, code, start, duration, place, message) {
   if (message) li.appendChild(line("", `"${message}"`));
 }
 
-
+// Run one database action, then reload everything
 async function act(rpcName, args, doneText) {
   const { error } = await db.rpc(rpcName, args);
   if (error) {
@@ -84,7 +84,7 @@ async function act(rpcName, args, doneText) {
   await render();
 }
 
-
+// ---- READ ----------------------------------------------------------
 async function loadMine() {
   const { data, error } = await db.from("study_requests")
     .select(`request_id, status, proposed_start, duration_minutes, message, location_note,
@@ -107,7 +107,7 @@ async function loadAnswered() {
   return data.filter(a => a.study_requests);
 }
 
-
+// ---- Drawing ---------------------------------------------------------
 function sessionItem(s, contacts) {
   const li = document.createElement("li");
   headLines(li, s.subject, s.code, s.start, s.duration, s.place, s.message);
@@ -182,7 +182,7 @@ function waitingItem(a) {
 async function render() {
   const [mine, answered] = await Promise.all([loadMine(), loadAnswered()]);
 
-
+  // confirmed sessions: my own confirmed requests + other students' requests where I was confirmed
   const sessions = [];
   for (const r of mine.filter(x => x.status === "confirmed")) {
     const hit = r.request_responses.find(x => x.status === "confirmed");
@@ -199,7 +199,7 @@ async function render() {
   }
   sessions.sort((x, y) => new Date(x.start) - new Date(y.start));
 
-
+  // Telegram usernames: the database returns only those of confirmed partners
   const contacts = new Map();
   const ids = [...new Set(sessions.map(s => s.partnerId))];
   if (ids.length) {
@@ -223,7 +223,7 @@ async function render() {
   setCount("accepted", waiting.length);
 }
 
-
+// ---- Start ---------------------------------------------------------------
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
     setStatus(pageStatus, "The service is not available right now. Please try again later.", true);

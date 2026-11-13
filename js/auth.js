@@ -1,9 +1,12 @@
+// Helpers used by every page.
+
+// Show a message in a status element (green = ok, red = error)
 function setStatus(el, text, isError = false) {
   el.textContent = text;
   el.className = "status " + (isError ? "error" : "ok");
 }
 
-
+// Fill a <select> with options built from database rows
 function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
   select.innerHTML = "";
   if (emptyLabel) {
@@ -21,19 +24,32 @@ function fillSelect(select, rows, valueKey, labelFn, emptyLabel) {
   if (select.hasAttribute("data-searchable")) buildSearchable(select);
 }
 
-
+// ---- Selects you can search by typing ----------------------------
+// Add the attribute data-searchable to a <select>. The select stays in the page (hidden) and keeps
+// its value, and a text box with a suggestion list is shown in its place.
 function matchOption(select, text) {
   const t = text.trim().toLowerCase();
   return [...select.options].find(o => o.value !== "" && o.textContent.trim().toLowerCase() === t);
 }
 
-
+// Shows the text of the selected option in the text box (call it after setting select.value in code)
 function syncSearchable(select) {
   const input = select._combo;
   if (!input) return;
   const option = select.selectedOptions[0];
   input.value = option && option.value !== "" ? option.textContent : "";
   input.setCustomValidity("");
+}
+
+// Enables or disables a searchable select (its text box is the visible part)
+function setSearchableDisabled(select, disabled) {
+  select.disabled = disabled;
+  if (select._combo) select._combo.disabled = disabled;
+}
+
+// The place of a request as text. "Other" shows what the student wrote.
+function placeLabel(name, note) {
+  return note ? `${name}: ${note}` : name;
 }
 
 function buildSearchable(select) {
@@ -65,7 +81,7 @@ function buildSearchable(select) {
         input.setCustomValidity("Choose one of the options from the list.");
       }
     });
-
+    // leaving the box with half-typed text puts the chosen option back
     input.addEventListener("blur", () => syncSearchable(select));
 
     select.after(input, list);
@@ -89,8 +105,8 @@ function buildSearchable(select) {
   syncSearchable(select);
 }
 
-
-const IDLE_MINUTES = 60;
+// ---- Signing in and out --------------------------------------------
+const IDLE_MINUTES = 60;                       // sign out after 1 hour without activity
 const ACTIVE_KEY = "studymatch.lastActive";
 
 function markActive() {
@@ -104,7 +120,7 @@ function idleExpired() {
   } catch (e) { return false; }
 }
 
-
+// Signs out after IDLE_MINUTES without a click, key press, touch or scroll
 function startIdleTimer() {
   markActive();
   let lastMark = 0;
@@ -118,7 +134,7 @@ function startIdleTimer() {
   setInterval(() => { if (idleExpired()) signOut("timeout"); }, 60000);
 }
 
-
+// Removes every stored Supabase login from this browser (both kinds of storage)
 function clearStoredSessions() {
   for (const store of [window.localStorage, window.sessionStorage]) {
     try {
@@ -129,7 +145,9 @@ function clearStoredSessions() {
   }
 }
 
-
+// Pages that need a logged-in user call this first.
+// Not logged in -> go to the login page.
+// If "Keep me signed in" was not ticked, the login also ends after 1 hour without activity.
 async function requireLogin() {
   const { data } = await db.auth.getSession();
   if (!data.session) {
@@ -146,11 +164,11 @@ async function requireLogin() {
   return data.session;
 }
 
-
+// The id of the profile that belongs to the logged-in user
 async function getMyProfileId() {
   const { data, error } = await db.rpc("current_profile_id");
   if (error) throw error;
-  return data;
+  return data;                      // null if the profile row does not exist
 }
 
 async function signOut(reason) {
@@ -159,10 +177,10 @@ async function signOut(reason) {
   location.href = "login.html" + (reason ? "?notice=" + reason : "");
 }
 
-
+// Folder of the images, icons and sounds
 const ASSET_BASE = "assets/";
 
-
+// ---- Formatting helpers --------------------------------------
 function formatWhen(iso) {
   return new Date(iso).toLocaleString([], {
     weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
@@ -174,7 +192,7 @@ function formatDuration(min) {
   return min % 60 === 0 ? `${min / 60} h` : `${(min / 60).toFixed(1)} h`;
 }
 
-
+// A clickable Telegram link, or null if the username looks wrong
 function telegramAnchor(username) {
   if (!/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(username || "")) return null;
   const a = document.createElement("a");
@@ -185,7 +203,7 @@ function telegramAnchor(username) {
   return a;
 }
 
-
+// ---- Navigation: sign-out button in the header + tab bar at the bottom ----
 const NAV_ITEMS = [
   { id: "swipe",   href: "swipe.html",   icon: "\u21C4", label: "Swipe" },
   { id: "browse",  href: "browse.html",  icon: "\u2630", label: "Browse" },
@@ -194,7 +212,7 @@ const NAV_ITEMS = [
   { id: "profile", href: "profile.html", icon: "\u25CF", label: "Profile" }
 ];
 
-
+// An icon from the SVG sprite (decorative: the text label next to it says the same)
 function svgIcon(name) {
   const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg");
@@ -207,7 +225,7 @@ function svgIcon(name) {
   return svg;
 }
 
-
+// One short message for each kind of notification
 const NOTE_TEXT = {
   new_request: "A new request is available.",
   request_accepted: "Someone accepted your request. Open Sessions to confirm them.",
@@ -219,7 +237,8 @@ const NOTE_TEXT = {
   session_reminder_1h: "Reminder: your study session starts within an hour."
 };
 
-
+// ---- Notification message on screen + optional sound ------------
+// The message always appears. The sound is ON by default and can be switched off in the profile.
 const SOUND_KEY = "studymatch.sound";
 function soundEnabled() {
   try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch (e) { return true; }
@@ -248,7 +267,7 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastBox.hidden = true; }, 10000);
 }
 
-
+// ---- Notifications panel (the bell in the top bar) ----------------
 async function openNotifications() {
   let dlg = document.getElementById("notesDialog");
   if (!dlg) {
@@ -304,11 +323,13 @@ async function openNotifications() {
     list.appendChild(li);
   }
 
+  // opening the panel counts as reading the notifications
   await db.from("notifications").update({ is_read: true }).eq("is_read", false);
   if (window.refreshNavBadge) window.refreshNavBadge();
 }
 
 function renderNav(active, myId) {
+  // empty "live region" is created first, so screen readers announce the message later
   toastBox = document.createElement("div");
   toastBox.className = "toast";
   toastBox.setAttribute("role", "status");
@@ -316,7 +337,7 @@ function renderNav(active, myId) {
   toastBox.hidden = true;
   document.body.appendChild(toastBox);
 
-
+  // top bar: notifications bell, theme button, sign out
   const actions = document.createElement("div");
   actions.className = "header-actions";
 
@@ -358,7 +379,7 @@ function renderNav(active, myId) {
   document.body.appendChild(nav);
   document.body.classList.add("has-tabbar");
 
-
+  // number of unread notifications on the bell, updated live
   async function refreshBadge() {
     const { count } = await db.from("notifications")
       .select("notification_id", { count: "exact", head: true }).eq("is_read", false);

@@ -1,4 +1,9 @@
+// Subjects sorted by major, year of study and trimester.
+// Used by the swipe, browse, create and profile pages.
+// By default only the subjects of the student's own major and year are shown,
+// and the student can switch to any other major, year or trimester, or to all subjects.
 
+// Reads a whole table, 1000 rows at a time
 async function fetchAll(table, columns, orderColumns) {
   const rows = [];
   const size = 1000;
@@ -15,7 +20,7 @@ async function fetchAll(table, columns, orderColumns) {
 
 let catalogCache = null;
 
-
+// Majors, subjects and the curriculum (which subject belongs to which major, year and trimester)
 async function loadCatalog() {
   if (catalogCache) return catalogCache;
   const [majors, subjects, curriculum] = await Promise.all([
@@ -28,7 +33,7 @@ async function loadCatalog() {
   return catalogCache;
 }
 
-
+// The subjects for a major, year and trimester. 0 or empty means "any".
 function subjectsFor(catalog, major, year, trimester) {
   if (!major && !year && !trimester) return catalog.subjects;
   const ids = new Set(
@@ -41,13 +46,14 @@ function subjectsFor(catalog, major, year, trimester) {
   return catalog.subjects.filter(s => ids.has(s.subject_id));
 }
 
-
+// The major and year from the student's profile
 async function getMyAcademic(myId) {
   const { data } = await db.from("profiles").select("major_id, study_year").eq("profile_id", myId).single();
   return data || {};
 }
 
-
+// Connects the filter controls (sfMajor, sfYear, sfTerm and the two buttons) to a subject drop-down.
+// options: { subjectSelect, emptyLabel, myMajor, myYear, onChange }
 async function setupSubjectFilters(options) {
   const catalog = await loadCatalog();
   const major = document.getElementById("sfMajor");
@@ -90,11 +96,11 @@ async function setupSubjectFilters(options) {
   document.getElementById("sfMine").addEventListener("click", () => { showMine(); changed(); });
   document.getElementById("sfAll").addEventListener("click", () => { showAll(); changed(); });
 
-  showMine();
+  showMine();            // the default: the subjects of my own major and year
   refresh();
 
   return {
-
+    // silent = true: change the lists without starting a new search
     showAll(silent) { showAll(); refresh(); if (!silent) changed(); },
     refresh
   };

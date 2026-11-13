@@ -9,15 +9,15 @@ const placeBox   = document.getElementById("placeBox");
 const detailsBox = document.getElementById("detailsBox");
 const cDetails   = document.getElementById("cDetails");
 
-let locations = [];
+let locations = [];                 // all places, with is_online and needs_details
 
 const isOnline = () => cFormat.value === "online";
-function needsDetails() {
+function needsDetails() {           // an in-person place such as "Other" needs a description
   const place = locations.find(l => String(l.location_id) === cLocation.value);
   return !isOnline() && !!(place && place.needs_details);
 }
 
-
+// Online has no place. In person shows the place, and "Other" also asks where to meet.
 function updatePlaceFields() {
   placeBox.hidden = isOnline();
   if (cLocation._combo) cLocation._combo.required = !isOnline();
@@ -28,7 +28,7 @@ cFormat.addEventListener("change", updatePlaceFields);
 cLocation.addEventListener("change", updatePlaceFields);
 const cMessage   = document.getElementById("cMessage");
 
-function toLocalInput(d) {
+function toLocalInput(d) {          // Date -> value for <input type="datetime-local">
   const p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
@@ -41,7 +41,7 @@ function setDefaultTime() {
   cStart.value = toLocalInput(tomorrow);
 }
 
-
+// ---- WRITE: post a request ---------------------------------------
 createForm.addEventListener("submit", async event => {
   event.preventDefault();
   const start = new Date(cStart.value);
@@ -68,7 +68,7 @@ createForm.addEventListener("submit", async event => {
 
   const { error } = await db.rpc("create_request", {
     p_subject: Number(cSubject.value),
-    p_start: start.toISOString(),
+    p_start: start.toISOString(),          // stored in a time-zone-safe way
     p_duration: Number(cDuration.value),
     p_location: locationId,
     p_message: cMessage.value.trim() || null,
@@ -77,7 +77,7 @@ createForm.addEventListener("submit", async event => {
 
   button.disabled = false;
   if (error) {
-    setStatus(cStatus, error.message, true);
+    setStatus(cStatus, error.message, true);   // e.g. "You already have 5 open requests."
     return;
   }
   setStatus(cStatus, "Request posted. Other students can see it now.");
@@ -86,7 +86,7 @@ createForm.addEventListener("submit", async event => {
   setDefaultTime();
 });
 
-
+// ---- Start ---------------------------------------------------------
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
     setStatus(cStatus, "The service is not available right now. Please try again later.", true);
@@ -109,13 +109,13 @@ async function init() {
     if (locations.error) throw locations.error;
 
     locations = locations.data;
-
+    // only in-person places are in the list: online has no place
     fillSelect(cLocation, locations.filter(l => !l.is_online), "location_id", l => l.name, "Choose...");
     const usual = me.data && locations.find(l => l.location_id === me.data.location_id);
-    if (usual && usual.is_online) cFormat.value = "online";
-    else if (usual) { cLocation.value = usual.location_id; syncSearchable(cLocation); }
+    if (usual && usual.is_online) cFormat.value = "online";                       // your usual way
+    else if (usual) { cLocation.value = usual.location_id; syncSearchable(cLocation); }   // your usual place
     updatePlaceFields();
-    
+    // the subject list shows the subjects of my own major and year first
     await setupSubjectFilters({ subjectSelect: cSubject, emptyLabel: null,
                                 myMajor: me.data && me.data.major_id, myYear: me.data && me.data.study_year });
     setDefaultTime();

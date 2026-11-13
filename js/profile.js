@@ -1,3 +1,4 @@
+// ---- Page elements ------------------------------------------
 const pageStatus     = document.getElementById("pageStatus");
 const profileForm    = document.getElementById("profileForm");
 const profileStatus  = document.getElementById("profileStatus");
@@ -11,25 +12,25 @@ const subjectChecks  = document.getElementById("subjectChecks");
 const saveBtn        = document.getElementById("saveBtn");
 const dirtyNote      = document.getElementById("dirtyNote");
 
-const TELEGRAM_RULE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
+const TELEGRAM_RULE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;   // Telegram: 5-32 letters, digits, _
 
 let myId = null;
-let dirty = false;
+let dirty = false;                    // true while there are changes that are not saved yet
 
 function setDirty(on) {
   dirty = on;
   dirtyNote.textContent = on ? "You have unsaved changes." : "";
 }
-
+// changing the subject filter is not a change of the profile
 profileForm.addEventListener("input", e => { if (!e.target.closest("[data-nodirty]")) setDirty(true); });
 profileForm.addEventListener("change", e => { if (!e.target.closest("[data-nodirty]")) setDirty(true); });
 window.addEventListener("beforeunload", event => {
-  if (dirty) { event.preventDefault(); event.returnValue = ""; }
+  if (dirty) { event.preventDefault(); event.returnValue = ""; }   // the browser asks before leaving
 });
 
-
+// ---- Load ---------------------------------------------------
 let catalog = null;
-const selectedSubjects = new Set();
+const selectedSubjects = new Set();   // ticked subjects, including the ones hidden by the filter
 
 async function loadProfile() {
   const [{ data: majors }, { data: locations }, { data: profile, error }, { data: contact }] =
@@ -61,7 +62,7 @@ async function loadProfile() {
   return profile;
 }
 
-
+// ---- Subjects: filter by major, year and trimester, search, and tick ----
 const sfMajor = document.getElementById("sfMajor");
 const sfYear  = document.getElementById("sfYear");
 const sfTerm  = document.getElementById("sfTerm");
@@ -120,15 +121,15 @@ async function loadSubjects(profile) {
   document.getElementById("sfMine").addEventListener("click", () => { showMine(); renderSubjectChecks(); });
   document.getElementById("sfAll").addEventListener("click", () => { showAll(); renderSubjectChecks(); });
 
-  showMine();
+  showMine();                                   // default: the subjects of my major and year
   renderSubjectChecks();
 }
 
-
+// ---- Save everything with one button -------------------------------
 profileForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-
+  // "@name" and spaces are removed; empty means "no Telegram username"
   const telegram = telegramInput.value.trim().replace(/^@/, "");
   if (telegram && !TELEGRAM_RULE.test(telegram)) {
     setStatus(profileStatus,
@@ -140,8 +141,8 @@ profileForm.addEventListener("submit", async event => {
   saveBtn.disabled = true;
   setStatus(profileStatus, "Saving...");
 
-
-  const subjects = [...selectedSubjects];
+  // One database function saves the details, the Telegram username and the subjects together.
+  const subjects = [...selectedSubjects];       // also the ticked subjects that the filter hides
   const { error } = await db.rpc("save_profile", {
     p_full_name: fullNameInput.value.trim(),
     p_major: majorSelect.value ? Number(majorSelect.value) : null,
@@ -163,7 +164,7 @@ profileForm.addEventListener("submit", async event => {
   setStatus(pageStatus, "");
 });
 
-
+// ---- Delete my account: e-mail code, then the database function -------
 function setupDeleteAccount() {
   const dialog   = document.getElementById("deleteDialog");
   const step1    = document.getElementById("deleteStep1");
@@ -182,7 +183,7 @@ function setupDeleteAccount() {
   document.getElementById("deleteCancel1").addEventListener("click", () => dialog.close());
   document.getElementById("deleteCancel2").addEventListener("click", () => dialog.close());
 
-
+  // 1. send a one-time code to the e-mail address of the account (the e-mail has a code and no link)
   async function sendCode() {
     setStatus(status, "Sending the code...");
     const { data } = await db.auth.getUser();
@@ -199,7 +200,7 @@ function setupDeleteAccount() {
   document.getElementById("sendCodeBtn").addEventListener("click", sendCode);
   document.getElementById("resendCodeBtn").addEventListener("click", sendCode);
 
-
+  // 2. check the code, then delete the account
   document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     const token = codeBox.value.replace(/\s+/g, "");
     if (!token) { setStatus(status, "Enter the code from the e-mail.", true); return; }
@@ -221,7 +222,7 @@ function setupDeleteAccount() {
   });
 }
 
-
+// ---- Notification sound setting ----------------------------------------
 function setupSoundSetting() {
   const soundToggle = document.getElementById("soundToggle");
   const soundStatus = document.getElementById("soundStatus");
@@ -231,13 +232,13 @@ function setupSoundSetting() {
     setStatus(soundStatus, soundToggle.checked ? "Sound is on." : "Sound is off.");
   });
   document.getElementById("soundTest").addEventListener("click", () => {
-    showToast("Test: this is how a notification looks.");
-    if (soundEnabled()) playChime();
+    showToast("Test: this is how a notification looks.");      // visual equivalent
+    if (soundEnabled()) playChime();                           // sound only if it is switched on
     setStatus(soundStatus, soundEnabled() ? "Message shown and sound played." : "Message shown (sound is off).");
   });
 }
 
-
+// ---- Start ----------------------------------------------------
 async function init() {
   if (SUPABASE_URL.includes("YOUR-PROJECT-ID")) {
     setStatus(pageStatus, "The service is not available right now. Please try again later.", true);

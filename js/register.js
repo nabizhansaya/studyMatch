@@ -14,7 +14,7 @@ wireShowPassword(document.getElementById("showPw"), [suPassword, suPassword2]);
 signupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-
+  // the same rules are also set in Supabase, because checks in the browser can be bypassed
   if (!checkPassword(suPassword.value, suEmail.value).ok) {
     setStatus(suStatus, "The password does not meet all the rules yet.", true);
     suPassword.focus();
@@ -34,7 +34,7 @@ signupForm.addEventListener("submit", async (event) => {
     email: suEmail.value.trim(),
     password: suPassword.value,
     options: {
-
+      // the database trigger copies these three values into the new profile
       data: {
         full_name: document.getElementById("suName").value.trim(),
         major_id: suMajor.value,
@@ -46,11 +46,11 @@ signupForm.addEventListener("submit", async (event) => {
 
   button.disabled = false;
   if (error) {
- 
+    // The sign-up check answers "Please sign up with your university e-mail address."
     setStatus(suStatus, error.message, true);
     return;
   }
-  if (data.session) {
+  if (data.session) {                  // only when e-mail confirmation is switched off
     markActive();
     location.href = "swipe.html";
     return;

@@ -1,11 +1,11 @@
-
+// theme button (system / light / dark) in the top bar
 document.querySelector("header").appendChild(createThemeButton());
 
 const signinForm = document.getElementById("signinForm");
 const siStatus   = document.getElementById("siStatus");
 const siKeep     = document.getElementById("siKeep");
 
-
+// short messages shown after being sent back to this page
 const NOTICES = {
   timeout: "You were signed out after 1 hour without activity. Please sign in again.",
   deleted: "Your account was deleted.",
@@ -19,7 +19,8 @@ signinForm.addEventListener("submit", async (event) => {
   button.disabled = true;
   setStatus(siStatus, "Signing in...");
 
-
+  // The choice decides where the login is kept: localStorage stays after the tab is closed,
+  // sessionStorage ends when the tab is closed.
   const keep = siKeep.checked;
   setKeepSignedIn(keep);
   clearStoredSessions();
@@ -32,7 +33,7 @@ signinForm.addEventListener("submit", async (event) => {
 
   button.disabled = false;
   if (error) {
-    setStatus(siStatus, error.message, true);
+    setStatus(siStatus, error.message, true);   // e.g. wrong password, e-mail not confirmed
     return;
   }
   markActive();
@@ -48,7 +49,7 @@ async function init() {
   if (notice && NOTICES[notice]) setStatus(siStatus, NOTICES[notice]);
 
   const { data } = await db.auth.getSession();
-  if (data.session) location.href = "swipe.html";
+  if (data.session) location.href = "swipe.html";      // already signed in
 }
 
 init();

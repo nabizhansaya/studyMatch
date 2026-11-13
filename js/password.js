@@ -1,3 +1,5 @@
+// Password rules and the strength meter (used on the register and reset pages).
+// The same rules must also be set in Supabase: Authentication, Sign In / Providers, password strength.
 
 const COMMON_PASSWORDS = new Set([
   "password", "password1", "password123", "qwerty", "qwerty123", "qwertyuiop", "12345678", "123456789",
@@ -6,6 +8,7 @@ const COMMON_PASSWORDS = new Set([
   "qwerty1234", "monkey123", "dragon123", "football1", "baseball1", "superman1", "trustno1", "changeme"
 ]);
 
+// the special characters that Supabase accepts
 const SPECIAL = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
 
 function checkPassword(pw, email) {
@@ -27,7 +30,7 @@ function checkPassword(pw, email) {
   return { rules, ok, level, percent: Math.round((done / rules.length) * 100) };
 }
 
-
+// Live checklist and bar under a password field
 function attachPasswordMeter(input, list, bar, label, getEmail) {
   const TEXT = { weak: "Weak", fair: "Fair", good: "Good", strong: "Strong" };
   function update() {
@@ -47,7 +50,7 @@ function attachPasswordMeter(input, list, bar, label, getEmail) {
   update();
 }
 
-
+// "Show password" tick box
 function wireShowPassword(checkbox, inputs) {
   checkbox.addEventListener("change", () => {
     for (const input of inputs) input.type = checkbox.checked ? "text" : "password";

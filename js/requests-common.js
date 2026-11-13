@@ -1,3 +1,5 @@
+// Shared by swipe.html and browse.html: filters, the request feed, accept / skip.
+
 function el(id) { return document.getElementById(id); }
 
 async function loadOptions() {
@@ -12,12 +14,12 @@ async function loadOptions() {
 
 function fillFilters(options) {
   fillSelect(el("fSubject"), options.subjects, "subject_id", s => `${s.name} (${s.code})`, "Any subject");
-
+  // only in-person places: an online request has no place
   fillSelect(el("fLocation"), options.locations.filter(l => !l.is_online), "location_id", l => l.name, "Any place");
   linkFormatAndPlace();
 }
 
-
+// The place filter is only available for in-person requests
 function linkFormatAndPlace() {
   const format = el("fFormat");
   const place = el("fLocation");
@@ -30,12 +32,12 @@ function linkFormatAndPlace() {
   update();
 }
 
-
+// Reads the filter controls of the current page into the parameters of find_requests()
 function readFilters() {
   let from = null, to = null;
   const dateInput = el("fDate");
   if (dateInput && dateInput.value) {
-    const start = new Date(dateInput.value + "T00:00:00");
+    const start = new Date(dateInput.value + "T00:00:00");   // local midnight
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
     from = start.toISOString();
@@ -56,20 +58,20 @@ function readFilters() {
   };
 }
 
-
+// READ: open requests of other students that match the filters
 async function fetchRequests() {
   const { data, error } = await db.rpc("find_requests", readFilters());
   if (error) throw error;
   return data;
 }
 
-
+// WRITE: accept a request (swipe right). Nothing else to fill in.
 async function acceptRequest(requestId) {
   const { error } = await db.rpc("accept_request", { p_request: requestId });
   if (error) throw error;
 }
 
-
+// WRITE: skip a request (swipe left). It is hidden from this user from now on.
 async function skipRequest(requestId, myId) {
   const { error } = await db.from("request_responses")
     .insert({ request_id: requestId, responder_id: myId, status: "declined" });
@@ -88,7 +90,7 @@ async function resetSkips(myId) {
   if (error) throw error;
 }
 
-
+// A request as short text lines (used by cards and lists)
 function requestLines(r) {
   const who = [r.owner_name, r.owner_faculty, r.owner_year ? `year ${r.owner_year}` : null]
     .filter(Boolean).join(" - ");
@@ -99,7 +101,7 @@ function requestLines(r) {
   };
 }
 
-
+// After accepting: the student is interested. The owner must confirm before any contact is shown.
 async function showMatch(r) {
   const dlg = document.createElement("dialog");
   dlg.setAttribute("aria-labelledby", "matchTitle");
