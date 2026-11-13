@@ -1,3 +1,4 @@
+
 (function () {
   var KEY = "studymatch.theme";
   var ORDER = ["system", "light", "dark"];
@@ -19,13 +20,13 @@
   function set(mode) {
     try {
       if (mode === "system") localStorage.removeItem(KEY); else localStorage.setItem(KEY, mode);
-    } catch (e) { /* storage blocked*/ }
+    } catch (e) { /* storage blocked: the choice lasts until the page is closed */ }
     apply(mode);
   }
 
   apply(get());
 
-  
+ 
   window.createThemeButton = function () {
     var NS = "http://www.w3.org/2000/svg";
     var button = document.createElement("button");
