@@ -1,3 +1,4 @@
+
 async function fetchAll(table, columns, orderColumns) {
   const rows = [];
   const size = 1000;
@@ -93,6 +94,7 @@ async function setupSubjectFilters(options) {
   refresh();
 
   return {
+
     showAll(silent) { showAll(); refresh(); if (!silent) changed(); },
     refresh
   };
