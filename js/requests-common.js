@@ -12,8 +12,24 @@ async function loadOptions() {
 
 function fillFilters(options) {
   fillSelect(el("fSubject"), options.subjects, "subject_id", s => `${s.name} (${s.code})`, "Any subject");
-  fillSelect(el("fLocation"), options.locations, "location_id", l => l.name, "Any place");
+
+  fillSelect(el("fLocation"), options.locations.filter(l => !l.is_online), "location_id", l => l.name, "Any place");
+  linkFormatAndPlace();
 }
+
+
+function linkFormatAndPlace() {
+  const format = el("fFormat");
+  const place = el("fLocation");
+  const update = () => {
+    const online = format.value === "online";
+    if (online) { place.value = ""; syncSearchable(place); }
+    setSearchableDisabled(place, online);
+  };
+  format.addEventListener("change", update);
+  update();
+}
+
 
 function readFilters() {
   let from = null, to = null;
@@ -32,7 +48,11 @@ function readFilters() {
     p_from: from,
     p_to: to,
     p_my_subjects: el("fMine").checked,
-    p_limit: 30
+    p_limit: 30,
+    // only subjects of this major, year and trimester (used when "Any subject" is chosen)
+    p_major: el("sfMajor") && el("sfMajor").value ? Number(el("sfMajor").value) : null,
+    p_year: el("sfYear") && el("sfYear").value ? Number(el("sfYear").value) : null,
+    p_trimester: el("sfTerm") && el("sfTerm").value ? Number(el("sfTerm").value) : null
   };
 }
 
@@ -75,7 +95,7 @@ function requestLines(r) {
   return {
     who,
     when: formatWhen(r.proposed_start),
-    place: `${formatDuration(r.duration_minutes)} - ${r.location_name}${r.is_online ? " (online)" : ""}`
+    place: `${formatDuration(r.duration_minutes)} - ${r.is_online ? "Online" : placeLabel(r.location_name, r.location_note)}`
   };
 }
 
